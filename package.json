@@ -8,7 +8,9 @@
     "typecheck": "tsc --noEmit",
     "capture": "tsx src/cli.ts capture",
     "render": "tsx src/cli.ts render",
-    "video:render": "tsx src/cli.ts all"
+    "video:render": "tsx src/cli.ts all",
+    "studio": "pnpm --filter @tilo/studio dev",
+    "studio:build": "pnpm --filter @tilo/studio build"
   },
   "dependencies": {
     "@remotion/bundler": "^4.0.340",
@@ -26,5 +28,6 @@
     "tsx": "^4.20.0",
     "typescript": "^5.8.0",
     "vitest": "^3.2.0"
-  }
+  },
+  "packageManager": "pnpm@10.18.3"
 }
