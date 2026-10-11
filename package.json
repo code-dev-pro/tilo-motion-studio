@@ -1,0 +1,30 @@
+{
+  "name": "tilo-motion-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "capture": "tsx src/cli.ts capture",
+    "render": "tsx src/cli.ts render",
+    "video:render": "tsx src/cli.ts all"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.340",
+    "@remotion/renderer": "^4.0.340",
+    "remotion": "^4.0.340",
+    "playwright": "^1.58.2",
+    "react": "^19.1.2",
+    "react-dom": "^19.1.2",
+    "zod": "^4.1.12",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
