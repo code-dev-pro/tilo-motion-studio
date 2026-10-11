@@ -16,7 +16,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const titleText=opening?(project?.intro||intro||title):(project?.outro||outro||"Découvrez Tilo");
  const introOpacity=opening?Math.min(1,interpolate(f,[0,Math.max(1,fps*.4)],[0,1],{extrapolateRight:"clamp"})):1;
  const outroOpacity=closing?Math.min(1,interpolate(f,[durationInFrames-fps*2,durationInFrames-fps*1.5],[0,1],{extrapolateLeft:"clamp",extrapolateRight:"clamp"})):1;
- const activeClip=project?.clips.find(c=>t>=c.start&&t<c.start+c.duration&&c.title);
+ const activeClip=project?.clips.find(c=>t>=c.start&&t<c.start+c.duration&&c.title);\n const clipOpacity=activeClip?.transition==="fade"?Math.min(1,(t-activeClip.start)/.3,(activeClip.start+activeClip.duration-t)/.3):1;
  return <AbsoluteFill style={{background:project?.background||"radial-gradient(circle at 25% 20%,#293b69,#0c1122 70%)",color:"white",fontFamily:"Arial,sans-serif",overflow:"hidden",alignItems:"center",justifyContent:"center"}}>
   <div style={{position:"absolute",width:frameWidth,height:frameHeight,borderRadius:project?.radius??22,overflow:"hidden",boxShadow:project?.shadow===false?"none":"0 35px 100px #0009,0 0 0 1px #ffffff35",transform:`translate(${translateX}px,${translateY}px) scale(${scale})`,background:"#121a2a"}}>
    <OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:"fill"}}/>
@@ -25,7 +25,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
     <svg width="32" height="40" viewBox="0 0 32 40"><path d="M3 2 L3 31 L10 24 L16 37 L22 34 L16 21 L27 21 Z" fill="#fff" stroke="#111827" strokeWidth="2.4" strokeLinejoin="round"/></svg>
    </div>}
   </div>
-  {activeClip&&<div style={{position:"absolute",bottom:height*.08,background:"#0b1435dd",padding:"18px 32px",borderRadius:12,fontSize:Math.min(36,width/25),fontWeight:600}}>{activeClip.title}</div>}
+  {activeClip&&<div style={{position:"absolute",bottom:height*.08,background:"#0b1435dd",opacity:clipOpacity,padding:"18px 32px",borderRadius:12,fontSize:Math.min(36,width/25),fontWeight:600}}>{activeClip.title}</div>}
   {(opening||closing)&&<AbsoluteFill style={{background:"linear-gradient(0deg,rgba(8,14,32,.94),rgba(8,14,32,.35))",alignItems:"center",justifyContent:"center",textAlign:"center",padding:50,opacity:opening?introOpacity:outroOpacity}}>
    <div style={{fontSize:28,letterSpacing:6,marginBottom:20}}>TILO</div>
    <div style={{fontSize:Math.min(60,width/15),fontWeight:700}}>{titleText}</div>
