@@ -3,3 +3,6 @@ output/
 .env
 *.mp4
 *.webm
+projects/
+apps/studio/.next/
+apps/studio/next-env.d.ts
