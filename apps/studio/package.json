@@ -1,0 +1,16 @@
+{
+  "name": "@tilo/studio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1 -p 3333",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1 -p 3333"
+  },
+  "dependencies": {
+    "next": "16.0.7",
+    "react": "^19.1.2",
+    "react-dom": "^19.1.2",
+    "zod": "^4.1.12"
+  }
+}
