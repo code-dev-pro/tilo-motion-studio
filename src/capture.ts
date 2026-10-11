@@ -7,7 +7,7 @@ export async function perform(page:Page,a:Scenario["actions"][number],base:strin
  case "navigate": {
   const u=new URL(a.path,base);
   if(u.origin!==new URL(base).origin)throw Error("Cross-origin navigation refused");
-  await page.goto(u.href,{waitUntil:"networkidle"});break;
+  await page.goto(u.href,{waitUntil:"domcontentloaded"});break;
  }
  case "click":await page.locator(a.selector).click();break;
  case "wait":await page.waitForTimeout(a.ms);break;
@@ -18,7 +18,7 @@ export async function perform(page:Page,a:Scenario["actions"][number],base:strin
   await page.mouse.down();await page.mouse.move(a.x,a.y,{steps:a.steps});await page.mouse.up();break;
  }
  case "bridge":await page.evaluate(async ({method,args})=>{
-  const api=(window as Window&{__TILO_DEMO__?:Record<string,(...x:any[])=>Promise<void>>}).__TILO_DEMO__;
+  const api=(window as Window&{__TILO_DEMO__?:Record<string,(...x:unknown[])=>Promise<void>>}).__TILO_DEMO__;
   if(!api?.[method])throw Error("Demo Bridge unavailable: "+method);
   await api[method](...args);
  },{method:a.method,args:a.args});break;
