@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
-import type {AudioTrack} from "../../../../src/audio-tracks";
-import {waveformPeaks,clampAudioStart,trimAudioEdge} from "../../../../src/audio-editing";
+import type {AudioTrack} from "../../../src/audio-tracks";
+import {waveformPeaks,clampAudioStart,trimAudioEdge} from "../../../src/audio-editing";
 type Props={track:AudioTrack;recording:string;movieDuration:number;onMove:(start:number)=>void;onTrim:(track:AudioTrack)=>void;onSelect:()=>void};
 export function AudioWaveformClip({track,recording,movieDuration,onMove,onTrim,onSelect}:Props){
  const [peaks,setPeaks]=useState<number[]>([]);
