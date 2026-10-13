@@ -1,9 +1,9 @@
 "use client";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {Player, type PlayerRef} from "@remotion/player";
-import {Promo} from "../../../../src/composition";
-import {buildCameraTrack} from "../../../../src/cinematic-v2";
-import type {MotionEvent,CameraKeyframe} from "../../../../src/cinematic";
+import {Promo} from "../../../src/composition";
+import {buildCameraTrack} from "../../../src/cinematic-v2";
+import type {MotionEvent,CameraKeyframe} from "../../../src/cinematic";
 type Settings={intro:string;outro:string;zoom:number;autoZoom:boolean;cursor:boolean;background:string;radius:number;shadow:boolean;camera:CameraKeyframe[]};
 type Recording={id:string;duration:number;viewport:{width:number;height:number}};
 type Detail={manifest:{duration?:number;viewport:{width:number;height:number}},events:MotionEvent[];scenario?:{video?:{duration:number;fps:number;zoom:number};title?:string};settings:Settings;video:string};
@@ -18,6 +18,7 @@ export default function Home(){
  const [selected,setSelected]=useState(""),[detail,setDetail]=useState<Detail|null>(null),[settings,setSettings]=useState<Settings>(defaults);
  const [format,setFormat]=useState<"landscape"|"portrait"|"square">("landscape"),[busy,setBusy]=useState(false),[message,setMessage]=useState("Prêt"),[playhead,setPlayhead]=useState(0);
  const player=useRef<PlayerRef>(null);
+ useEffect(()=>{const ref=player.current;if(!ref)return;const handler=(e:{detail:{frame:number}})=>setPlayhead(e.detail.frame/30);ref.addEventListener("frameupdate",handler);return()=>ref.removeEventListener("frameupdate",handler)},[selected,format,detail]);
  const dims={landscape:{width:1920,height:1080},portrait:{width:1080,height:1920},square:{width:1080,height:1080}}[format];
  async function loadList(){const r=await fetch("/api/recordings");if(r.ok)setRecordings((await r.json()).recordings||[])}
  async function load(id:string){setSelected(id);if(!id){setDetail(null);return}const r=await fetch("/api/recordings/"+id);if(!r.ok){setMessage("Capture introuvable");return}const d=await r.json() as Detail;setDetail(d);setSettings(d.settings);setPlayhead(0);setMessage("Capture chargée")}
@@ -57,7 +58,7 @@ export default function Home(){
    </aside>
    <section style={{display:"grid",gap:14}}>
     <div style={panel}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h3 style={{marginTop:0}}>Prévisualisation cinématique</h3><select style={{...field,width:140}} value={format} onChange={e=>setFormat(e.target.value as typeof format)}><option value="landscape">16:9</option><option value="portrait">9:16</option><option value="square">1:1</option></select></div>
-     {detail?<div style={{maxHeight:540,display:"flex",justifyContent:"center",overflow:"hidden"}}><Player ref={player} key={selected+format} component={Promo} inputProps={props} compositionWidth={dims.width} compositionHeight={dims.height} fps={30} durationInFrames={Math.max(30,Math.ceil(duration*30))} controls style={{width:format==="portrait"?"min(300px,100%)":"100%",aspectRatio:`${dims.width}/${dims.height}`}} onFrameUpdate={frame=>setPlayhead(frame/30)}/></div>:<div style={{aspectRatio:"16/9",display:"grid",placeItems:"center",background:"#0d1423",borderRadius:12,color:"#91a6cc"}}>Sélectionne une capture à gauche</div>}
+     {detail?<div style={{maxHeight:540,display:"flex",justifyContent:"center",overflow:"hidden"}}><Player ref={player} key={selected+format} component={Promo} inputProps={props} compositionWidth={dims.width} compositionHeight={dims.height} fps={30} durationInFrames={Math.max(30,Math.ceil(duration*30))} controls style={{width:format==="portrait"?"min(300px,100%)":"100%",aspectRatio:`${dims.width}/${dims.height}`}}/></div>:<div style={{aspectRatio:"16/9",display:"grid",placeItems:"center",background:"#0d1423",borderRadius:12,color:"#91a6cc"}}>Sélectionne une capture à gauche</div>}
     </div>
     <div style={panel}><h3 style={{marginTop:0}}>Timeline · {playhead.toFixed(1)} / {duration.toFixed(1)} s</h3><input aria-label="Position temporelle" type="range" min="0" max={duration} step=".0333" value={Math.min(playhead,duration)} onChange={e=>{const time=Number(e.target.value);setPlayhead(time);player.current?.seekTo(Math.round(time*30))}} style={{width:"100%"}}/><div style={{height:26,background:"#273a5a",borderRadius:7,position:"relative",marginTop:14}}>{(detail?.events||[]).filter(e=>e.type==="click").map((e,i)=><button key={i} title={`Clic à ${e.t.toFixed(2)}s`} onClick={()=>player.current?.seekTo(Math.round(e.t*30))} style={{position:"absolute",left:`${Math.min(99,e.t/duration*100)}%`,height:"100%",width:5,border:0,background:"#a9c3ff",cursor:"pointer"}}/>)}</div><p style={{fontSize:12,color:"#a3b5d2"}}>Repères bleus : clics enregistrés. Déplace la tête de lecture ou clique sur un repère.</p></div>
     <div style={panel}><div style={{display:"flex",justifyContent:"space-between"}}><h3 style={{marginTop:0}}>Caméra · Keyframes</h3><button style={button} onClick={()=>patch({camera:[...settings.camera,{t:playhead,x:.5,y:.5,scale:1.35}].sort((a,b)=>a.t-b.t)})}>+ À {playhead.toFixed(1)}s</button></div>{settings.camera.map((k,i)=><div key={i} style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr)) 30px",gap:6,marginBottom:8}}>{(["t","x","y","scale"] as const).map(prop=><label key={prop} style={{fontSize:11}}>{prop}<input style={field} type="number" min={prop==="scale"?1:0} max={prop==="scale"?2:undefined} step=".05" value={k[prop]} onChange={e=>setCamera(i,{[prop]:Number(e.target.value)})}/></label>)}<button style={{...button,alignSelf:"center",padding:6}} onClick={()=>patch({camera:settings.camera.filter((_,j)=>j!==i)})}>×</button></div>)}{!settings.camera.length&&<p style={{color:"#a3b5d2"}}>Zoom automatique actif tant qu'aucun keyframe n'est ajouté.</p>}</div>
