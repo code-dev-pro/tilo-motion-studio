@@ -1,7 +1,8 @@
 import {NextResponse} from "next/server";
 import {spawn,type ChildProcess} from "node:child_process";
 import {resolve} from "node:path";
-import {recordingOptions} from "../../../../../src/recording";
+import {z} from "zod";
+const recordingOptions=z.object({url:z.string().url().refine(v=>{const u=new URL(v);return ["localhost","127.0.0.1"].includes(u.hostname)&&["http:","https:"].includes(u.protocol)}),id:z.string().regex(/^[a-z0-9-]+$/),width:z.number().int().min(640).max(3840).default(1440),height:z.number().int().min(360).max(2160).default(900)});
 export const runtime="nodejs";
 let child:ChildProcess|null=null;
 let state:"idle"|"recording"|"stopping"|"ready"|"error"="idle";
@@ -13,7 +14,9 @@ export async function POST(req:Request){
  const data=await req.json().catch(()=>null);
  if(data?.action==="stop"){
   if(!child||state!=="recording")return NextResponse.json({error:"No active recording"},{status:409});
-  state="stopping";child.kill("SIGINT");return NextResponse.json({state,id});
+  state="stopping";
+  if(child.pid&&process.platform!=="win32")process.kill(-child.pid,"SIGINT");else child.kill("SIGINT");
+  return NextResponse.json({state,id});
  }
  if(data?.action!=="start")return NextResponse.json({error:"Invalid action"},{status:400});
  if(child)return NextResponse.json({error:"Recorder already active"},{status:409});
@@ -21,7 +24,7 @@ export async function POST(req:Request){
  if(!parsed.success)return NextResponse.json({error:parsed.error.flatten()},{status:400});
  id=parsed.data.id;error="";state="recording";
  const root=resolve(process.cwd(),"../..");
- const worker=spawn("pnpm",["exec","tsx","src/manual-recorder.ts"],{cwd:root,env:{...process.env,TILO_RECORDING_OPTIONS:JSON.stringify(parsed.data)},stdio:["ignore","pipe","pipe"]});
+ const worker=spawn("pnpm",["exec","tsx","src/manual-recorder.ts"],{cwd:root,env:{...process.env,TILO_RECORDING_OPTIONS:JSON.stringify(parsed.data)},stdio:["ignore","pipe","pipe"],detached:process.platform!=="win32"});
  child=worker;
  let stderr="",ready=false;
  worker.stdout?.on("data",(buf:Buffer)=>{const message=buf.toString();if(message.includes("RECORDING_READY"))ready=true});
