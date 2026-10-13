@@ -3,7 +3,7 @@ import {spawn,type ChildProcess} from "node:child_process";
 import {resolve,join} from "node:path";
 import {mkdir,writeFile} from "node:fs/promises";
 import {z} from "zod";
-const recordingOptions=z.object({url:z.string().url().refine(v=>{const u=new URL(v);return ["localhost","127.0.0.1"].includes(u.hostname)&&["http:","https:"].includes(u.protocol)}),id:z.string().regex(/^[a-z0-9-]+$/),width:z.number().int().min(640).max(3840).default(1440),height:z.number().int().min(360).max(2160).default(900)});
+const recordingOptions=z.object({url:z.string().url().refine(v=>{const u=new URL(v);return ["localhost","127.0.0.1"].includes(u.hostname)&&["http:","https:"].includes(u.protocol)}),id:z.string().regex(/^[a-z0-9-]+$/),width:z.number().int().min(640).max(3840).default(1600),height:z.number().int().min(360).max(2160).default(900)});
 export const runtime="nodejs";
 let child:ChildProcess|null=null;
 let state:"idle"|"recording"|"stopping"|"ready"|"error"="idle";

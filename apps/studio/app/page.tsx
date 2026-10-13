@@ -3,12 +3,13 @@ import {useEffect,useState} from "react";
 type Status={state:"idle"|"recording"|"stopping"|"ready"|"error";id?:string;error?:string};
 export default function Home(){
  const [url,setUrl]=useState("http://localhost:3000"),[id,setId]=useState("tilo-demo"),[format,setFormat]=useState("landscape");
+ const [captureSize,setCaptureSize]=useState("1600x900");
  const [status,setStatus]=useState<Status>({state:"idle"}),[busy,setBusy]=useState(false),[message,setMessage]=useState("Prêt");
  const [scenario,setScenario]=useState("fixture"),[mode,setMode]=useState<"manual"|"automatic">("manual");
  useEffect(()=>{const timer=setInterval(()=>{void fetch("/api/record").then(r=>r.json()).then(setStatus).catch(()=>{})},1500);return()=>clearInterval(timer)},[]);
  async function action(name:"start"|"stop"){
   setBusy(true);try{
-   const r=await fetch("/api/record",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:name,options:{url,id}})});
+   const r=await fetch("/api/record",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:name,options:{url,id,width:Number(captureSize.split("x")[0]),height:Number(captureSize.split("x")[1])}})});
    const d=await r.json();if(!r.ok)throw Error(typeof d.error==="string"?d.error:JSON.stringify(d.error));
    setStatus(d);setMessage(name==="start"?"Fenêtre Chromium en cours d'ouverture…":"Finalisation de la capture…");
   }catch(e){setMessage(String(e))}finally{setBusy(false)}
@@ -27,7 +28,7 @@ export default function Home(){
   <header><small style={{color:"#b6c6e8",letterSpacing:3}}>TILO / PRODUCTION</small><h1 style={{fontSize:36,marginBottom:8}}>Motion Studio</h1><p style={{color:"#a5b7d7"}}>Enregistre les interactions réelles de Tilo, puis exporte une vidéo cinématique.</p></header>
   <section style={{background:"#151e31",border:"1px solid #35445f",borderRadius:18,padding:28,marginTop:30}}>
    <div style={{display:"flex",gap:10,marginBottom:24}}><button style={{...btn,background:mode==="manual"?"#8ca2ff":"#34425f",color:mode==="manual"?"#101827":"white"}} onClick={()=>setMode("manual")}>Enregistrement manuel</button><button style={{...btn,background:mode==="automatic"?"#8ca2ff":"#34425f",color:mode==="automatic"?"#101827":"white"}} onClick={()=>setMode("automatic")}>Scénario automatique</button></div>
-   {mode==="manual"?<><label>URL de Tilo<input style={field} value={url} onChange={e=>setUrl(e.target.value)} placeholder="http://localhost:3000"/></label><label>Nom de la capture<input style={field} value={id} onChange={e=>setId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,"-"))}/></label>
+   {mode==="manual"?<><label>URL de Tilo<input style={field} value={url} onChange={e=>setUrl(e.target.value)} placeholder="http://localhost:3000"/></label><label>Résolution de capture<select style={field} value={captureSize} onChange={e=>setCaptureSize(e.target.value)}><option value="1600x900">1600 × 900 (16:9)</option><option value="1920x1080">1920 × 1080 (16:9)</option><option value="1440x900">1440 × 900 (16:10)</option><option value="1080x1920">1080 × 1920 (9:16)</option></select></label><label>Nom de la capture<input style={field} value={id} onChange={e=>setId(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,"-"))}/></label>
     <p style={{color:"#b3c2df"}}>1. Démarre l'enregistrement. 2. Manipule Tilo dans Chromium. 3. Reviens ici pour arrêter. 4. Exporte le MP4.</p>
     <div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
      <button style={btn} disabled={busy||status.state==="recording"||status.state==="stopping"} onClick={()=>void action("start")}>● Démarrer l'enregistrement</button>
