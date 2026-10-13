@@ -7,6 +7,8 @@ import type {EditorSettings} from "./editor";
 import {sourceTimeAt} from "./timeline";
 import {LightingOverlay} from "./lighting-overlay";
 import {defaultEnvironment} from "./environment";
+import {CursorOverlay} from "./cursor-overlay";
+import {defaultCursorSettings} from "./cursor-settings";
 export type Props={src:string;title:string;intro:string;outro:string;zoom:number;events?:MotionEvent[];camera?:CameraKeyframe[];viewport?:{width:number;height:number};settings?:EditorSettings;preview?:boolean};
 export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={width:1920,height:1080},settings,preview=false}:Props){
  const f=useCurrentFrame(),{fps,durationInFrames,width,height}=useVideoConfig();
@@ -30,12 +32,9 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const clickSize=cursor?.click?48:0;
  return <AbsoluteFill style={{background:settings?.background??"radial-gradient(ellipse at 24% 18%,#324c8c 0%,#1a294b 38%,#0b1121 90%)",color:"white",fontFamily:"Arial,sans-serif",overflow:"hidden",alignItems:"center",justifyContent:"center"}}>
   <AbsoluteFill style={{background:"radial-gradient(circle at 75% 70%,#5365a52b,transparent 48%)",transform:`translate(${driftX}px,${driftY}px) scale(1.08)`}}/>
-  <div style={{position:"absolute",width:fw,height:fh,borderRadius:environment.radius??settings?.radius??24,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":`0 ${25+environment.depth*70}px ${50+environment.depth*120}px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32`,transform:`translate(${tx}px,${ty}px) scale(${totalScale}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
+  <div style={{position:"absolute",width:fw,height:fh,borderRadius:environment.radius,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":`0 ${25+environment.depth*70}px ${50+environment.depth*120}px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32`,transform:`translate(${tx}px,${ty}px) scale(${totalScale}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
    {settings?.clips?.length?settings.clips.map(clip=><Sequence key={clip.id} from={Math.round(clip.start*fps)} durationInFrames={Math.max(1,Math.round((clip.sourceOut-clip.sourceIn)*fps))} layout="none">{preview?<Video src={src} muted playsInline startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>}</Sequence>):(preview?<Video src={src} muted playsInline style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>)} 
-   {cursor&&<div style={{position:"absolute",left:cx,top:cy,transform:"translate(-3px,-2px)",pointerEvents:"none",filter:"drop-shadow(0 2px 2px #0008)"}}>
-    {cursor.click&&<div style={{position:"absolute",width:clickSize,height:clickSize,left:-clickSize/2,top:-clickSize/2,border:"2px solid #a3b6ff",borderRadius:"50%",background:"#a3b6ff22"}}/>}
-    <svg width="30" height="38" viewBox="0 0 32 40"><path d="M3 2 L3 31 L10 24 L16 37 L22 34 L16 21 L27 21 Z" fill="white" stroke="#111827" strokeWidth="2.4" strokeLinejoin="round"/></svg>
-   </div>}
+   <CursorOverlay events={events} time={sourceTime??t} width={fw} height={fh} viewport={viewport} settings={{...(settings?.cursorSettings??defaultCursorSettings()),visible:settings?.cursor!==false&&(settings?.cursorSettings?.visible??true)}}/>
   </div>
   <LightingOverlay settings={environment} width={width} height={height} time={t}/>
   {environment.vignette>0&&<AbsoluteFill style={{pointerEvents:"none",background:`radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,${environment.vignette}) 100%)`}}/>}
