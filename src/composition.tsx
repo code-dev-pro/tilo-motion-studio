@@ -4,11 +4,13 @@ import type {CameraKeyframe,MotionEvent} from "./cinematic";
 import {interpolateTrack,smoothCursor} from "./cinematic-v2";
 import {fitInside} from "./layout";
 import type {EditorSettings} from "./editor";
+import {sourceTimeAt} from "./timeline";
 export type Props={src:string;title:string;intro:string;outro:string;zoom:number;events?:MotionEvent[];camera?:CameraKeyframe[];viewport?:{width:number;height:number};settings?:EditorSettings;preview?:boolean};
 export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={width:1920,height:1080},settings,preview=false}:Props){
  const f=useCurrentFrame(),{fps,durationInFrames,width,height}=useVideoConfig();
  const t=f/fps,duration=durationInFrames/fps;
- const cam=interpolateTrack(camera,t),cursor=settings?.cursor===false?null:smoothCursor(events,t);
+ const sourceTime=settings?.clips?.length?sourceTimeAt(settings.clips,t):t;
+ const cam=interpolateTrack(camera,sourceTime??t),cursor=settings?.cursor===false?null:smoothCursor(events,sourceTime??t);
  const scene=settings?.scene;
  const bounds={width:width*.88,height:height*.76};
  const frame=scene?.fit==="cover"?{width:bounds.width,height:bounds.height}:fitInside(viewport,bounds);
