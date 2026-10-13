@@ -4,11 +4,10 @@ import {resolve} from "node:path";
 import {z} from "zod";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
-const schema=z.object({scenario:z.enum(["fixture","moon-phases"]),format:z.enum(["landscape","portrait","square"])});
+const schema=z.object({scenario:z.enum(["fixture","moon-phases"]),format:z.enum(["landscape","portrait","square"]),project:z.string().regex(/^[a-z0-9-]+$/).optional(),batch:z.boolean().optional()});
 let running=false;
 export async function POST(request:Request){
- const host=request.headers.get("host")||"";
- const origin=request.headers.get("origin");
+ const host=request.headers.get("host")||"",origin=request.headers.get("origin");
  if(!/^(localhost|127\.0\.0\.1):3333$/.test(host))return NextResponse.json({error:"Local host required"},{status:403});
  if(origin&&new URL(origin).host!==host)return NextResponse.json({error:"Invalid origin"},{status:403});
  const parsed=schema.safeParse(await request.json().catch(()=>null));
@@ -16,10 +15,12 @@ export async function POST(request:Request){
  if(running)return NextResponse.json({error:"A render is already running"},{status:409});
  running=true;
  try{
-  const {scenario,format}=parsed.data;
+  const {scenario,format,project,batch}=parsed.data;
   const root=resolve(process.cwd(),"../..");
   const output=await new Promise<string>((ok,fail)=>{
-   const child=spawn("pnpm",["video:render","--scenario",scenario,"--format",format],{cwd:root,env:process.env,stdio:["ignore","pipe","pipe"]});
+   const args=["tsx","src/cli.ts",batch?"batch":"all","--scenario",scenario,"--format",format];
+   if(project)args.push("--project",project);
+   const child=spawn("pnpm",["exec",...args],{cwd:root,env:process.env,stdio:["ignore","pipe","pipe"]});
    let stderr="";
    child.stderr.on("data",(chunk:Buffer)=>{stderr=(stderr+chunk.toString()).slice(-3000)});
    child.on("error",fail);

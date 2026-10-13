@@ -10,7 +10,9 @@
     "render": "tsx src/cli.ts render",
     "video:render": "tsx src/cli.ts all",
     "studio": "pnpm --filter @tilo/studio dev",
-    "studio:build": "pnpm --filter @tilo/studio build"
+    "studio:build": "pnpm --filter @tilo/studio build",
+    "smoke": "tsx scripts/smoke.ts",
+    "video:batch": "tsx src/cli.ts batch"
   },
   "dependencies": {
     "@remotion/bundler": "^4.0.340",
