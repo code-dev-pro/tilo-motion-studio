@@ -83,3 +83,12 @@ html,body{background:var(--background);color:var(--foreground)}
 .audio-track-editor .section-title strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .audio-clip{background:var(--neutral-7);border-color:var(--neutral-6);color:var(--neutral-0)}
 .audio-track-editor [data-dragging]{z-index:2}
+
+/* Audio timeline: waveforms share Arc's neutral semantic palette. */
+.waveform-clip{padding:0 4px;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;user-select:none;cursor:grab}
+.waveform-clip:active{cursor:grabbing}
+.waveform-clip svg{position:absolute;inset:2px 0;width:100%;height:calc(100% - 4px);pointer-events:none}
+.waveform-title{position:relative;z-index:1;font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 5px;border-radius:3px;background:color-mix(in srgb,var(--surface) 75%,transparent);color:var(--foreground)}
+.waveform-fallback{opacity:.65}
+.sidebar [role="combobox"]{width:100%;min-width:0}
+.sidebar [data-radix-select-trigger]{max-width:100%}
