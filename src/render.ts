@@ -3,7 +3,8 @@ import {renderMedia,selectComposition} from "@remotion/renderer";
 import {resolve,join} from "node:path";
 import {access,readFile} from "node:fs/promises";
 import {sizes,type Format,type Scenario} from "./core";
-import {cameraFromClicks,type MotionEvent} from "./cinematic";
+import type {MotionEvent} from "./cinematic";
+import {buildCameraTrack} from "./cinematic-v2";
 import {startMediaServer} from "./media";
 
 export async function render(s:Scenario,format:Format){
@@ -16,7 +17,7 @@ export async function render(s:Scenario,format:Format){
   const props={
    src:`${media.baseUrl}/${encodeURIComponent(s.id)}/capture.webm`,
    title:s.title,intro:s.video.intro,outro:s.video.outro,zoom:s.video.zoom,
-   events,camera:cameraFromClicks(events,s.video.duration,s.viewport),viewport:s.viewport
+   events,camera:buildCameraTrack(events,s.video.duration,s.viewport),viewport:s.viewport
   };
   const composition=await selectComposition({serveUrl,id:"TiloPromo",inputProps:props});
   const dest=join(dir,format+".mp4");
