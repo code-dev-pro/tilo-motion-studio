@@ -9,10 +9,12 @@ export async function perform(page:Page,a:Scenario["actions"][number],base:strin
  case "navigate": {
   const u=new URL(a.path,base);
   if(u.origin!==new URL(base).origin)throw Error("Cross-origin navigation refused");
-  await page.goto(u.href,{waitUntil:"domcontentloaded"});break;
+  const response=await page.goto(u.href,{waitUntil:"domcontentloaded",timeout:15000});
+  if(response&&response.status()>=400)throw Error(`Navigation failed: HTTP ${response.status()} at ${u.href}`);
+  break;
  }
  case "click":{
-  const box=await page.locator(a.selector).boundingBox();
+  const box=await page.locator(a.selector).boundingBox({timeout:5000}).catch(()=>{throw Error(`Missing click target "${a.selector}" on ${page.url()}. For fixture, start: python3 -m http.server 4173 --directory fixture`)});
   if(!box)throw Error("Click target not visible");
   const x=box.x+box.width/2,y=box.y+box.height/2;
   record?.({type:"move",x,y});
@@ -21,7 +23,7 @@ export async function perform(page:Page,a:Scenario["actions"][number],base:strin
  }
  case "wait":await page.waitForTimeout(a.ms);break;
  case "drag":{
-  const b=await page.locator(a.selector).boundingBox();
+  const b=await page.locator(a.selector).boundingBox({timeout:5000}).catch(()=>{throw Error(`Missing drag target "${a.selector}" on ${page.url()}`)});
   if(!b)throw Error("Target not visible");
   const x=b.x+b.width/2,y=b.y+b.height/2;
   record?.({type:"move",x,y});
