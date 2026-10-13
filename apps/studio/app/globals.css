@@ -64,3 +64,14 @@ html,body{background:var(--background);color:var(--foreground)}
 .background-tile.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .timeline-resize-handle:hover:before,.timeline-resize-handle:focus-visible:before{background:var(--accent)}
 .topactions{gap:8px}.topactions button{display:inline-flex;align-items:center;gap:7px}
+
+/* Arc inspector: keep component widths inside a narrow resizable pane. */
+.inspector [role="tablist"]{max-width:100%;min-width:0}
+.inspector [role="tab"]{white-space:nowrap}
+.inspector [role="tabpanel"]{min-width:0}
+.inspector [data-radix-select-trigger]{max-width:100%}
+.inspector .pane-content{display:flex;flex-direction:column;gap:12px;min-width:0}
+.inspector .pane-content>.divider{margin:5px 0}
+.inspector .pane-content>.section-title{margin-bottom:0}
+.preview-head{gap:10px}
+.preview-head [role="combobox"]{min-width:95px}
