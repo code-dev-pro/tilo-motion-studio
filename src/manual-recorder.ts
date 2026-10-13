@@ -13,12 +13,13 @@ const context=await browser.newContext({viewport:{width:options.width,height:opt
 const page=await context.newPage();
 const events:MotionEvent[]=[];
 let start=0,stopping=false;
-await page.exposeBinding("__tiloRecordEvent",(_source,ev:Omit<MotionEvent,"t">)=>{if(start)events.push({...ev,t:(Date.now()-start)/1000})});
+await context.exposeBinding("__tiloRecordEvent",(_source,ev:Omit<MotionEvent,"t">)=>{if(start&&Number.isFinite(ev.x)&&Number.isFinite(ev.y))events.push({...ev,t:(Date.now()-start)/1000})});
 await context.addInitScript(()=>{
  const emit=(type:string,e:MouseEvent|WheelEvent)=>{void (window as unknown as {__tiloRecordEvent:(e:unknown)=>Promise<void>}).__tiloRecordEvent({type,x:e.clientX,y:e.clientY,...(e instanceof WheelEvent?{deltaY:e.deltaY}:{})})};
  let last=0;
  document.addEventListener("pointermove",e=>{const now=performance.now();if(now-last>=32){last=now;emit("move",e)}},{capture:true,passive:true});
  document.addEventListener("pointerdown",e=>emit("click",e),{capture:true,passive:true});
+ document.addEventListener("click",e=>emit("click",e),{capture:true,passive:true});
  document.addEventListener("wheel",e=>emit("scroll",e),{capture:true,passive:true});
 });
 async function finish(){
@@ -29,6 +30,7 @@ async function finish(){
   await context.close();
   if(video)await copyFile(await video.path(),join(dir,"capture.webm"));
   await writeFile(join(dir,"events.json"),JSON.stringify(events,null,2));
+  if(events.length===0)console.warn("RECORDING_WARNING: no pointer events captured. Check that interactions occurred in the Chromium recording window.");
   await writeFile(join(dir,"manifest.json"),JSON.stringify({scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url},null,2));
   const scenario=defineScenario({id:options.id,title:"Capture Tilo",viewport:{width:options.width,height:options.height},actions:[{type:"wait",ms:0}],video:{duration,fps:30,intro:"Découvrez Tilo",outro:"Apprendre autrement"}});
   await writeFile(join(dir,"scenario.json"),JSON.stringify(scenario,null,2));
@@ -41,5 +43,8 @@ const stopPoll=setInterval(()=>{void access(stopFile).then(()=>{clearInterval(st
 process.on("SIGINT",()=>{void finish()});
 process.on("SIGTERM",()=>{void finish()});
 browser.on("disconnected",()=>{if(!stopping){console.error("Browser closed before recording finalized");process.exitCode=1;process.exit()}});
-try{await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:20000});start=Date.now();console.log("RECORDING_READY",options.id)}
+try{await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:20000});
+ const bindingPresent=await page.evaluate(()=>typeof (window as unknown as {__tiloRecordEvent?:unknown}).__tiloRecordEvent==="function");
+ if(!bindingPresent)console.warn("RECORDING_WARNING: event bridge is not available in the page");
+ start=Date.now();console.log("RECORDING_READY",options.id)}
 catch(e){console.error("RECORDING_FAILED",e);await browser.close();process.exit(1)}
