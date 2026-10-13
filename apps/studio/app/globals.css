@@ -75,3 +75,11 @@ html,body{background:var(--background);color:var(--foreground)}
 .inspector .pane-content>.section-title{margin-bottom:0}
 .preview-head{gap:10px}
 .preview-head [role="combobox"]{min-width:95px}
+
+/* Audio editor: neutral Arc tokens, no hard-coded blue. */
+.audio-inspector{display:flex;flex-direction:column;gap:12px;min-width:0}
+.audio-track-editor{border:1px solid var(--border);border-radius:12px;background:var(--surface-muted);padding:12px;display:flex;flex-direction:column;gap:10px}
+.audio-track-editor .section-title{gap:6px;min-width:0}
+.audio-track-editor .section-title strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audio-clip{background:var(--neutral-7);border-color:var(--neutral-6);color:var(--neutral-0)}
+.audio-track-editor [data-dragging]{z-index:2}
