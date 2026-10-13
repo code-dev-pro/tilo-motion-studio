@@ -9,12 +9,14 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const f=useCurrentFrame(),{fps,durationInFrames,width,height}=useVideoConfig();
  const t=f/fps,duration=durationInFrames/fps;
  const cam=interpolateTrack(camera,t),cursor=settings?.cursor===false?null:smoothCursor(events,t);
- const frame=fitInside(viewport,{width:width*.88,height:height*.76});
- const fw=frame.width,fh=frame.height;
+ const scene=settings?.scene;
+ const bounds={width:width*.88,height:height*.76};
+ const frame=scene?.fit==="cover"?{width:bounds.width,height:bounds.height}:fitInside(viewport,bounds);
+ const fw=frame.width*(scene?.scale??1),fh=frame.height*(scene?.scale??1);
  const cx=cursor?cursor.x*fw/viewport.width:0,cy=cursor?cursor.y*fh/viewport.height:0;
  const totalScale=cam.scale*(settings?.zoom??zoom);
  // Position the focal point at the center of the output frame after scaling.
- const tx=(.5-cam.x)*fw*totalScale,ty=(.5-cam.y)*fh*totalScale;
+ const tx=(.5-cam.x)*fw*totalScale+(scene?.offsetX??0)*width*.25,ty=(.5-cam.y)*fh*totalScale+(scene?.offsetY??0)*height*.25;
  const enter=Math.min(1,interpolate(t,[0,.5],[0,1],{extrapolateRight:"clamp"}));
  const exit=Math.min(1,interpolate(duration-t,[0,.6],[0,1],{extrapolateRight:"clamp"}));
  const opening=t<1.6,closing=t>duration-1.6;
@@ -24,7 +26,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  return <AbsoluteFill style={{background:settings?.background??"radial-gradient(ellipse at 24% 18%,#324c8c 0%,#1a294b 38%,#0b1121 90%)",color:"white",fontFamily:"Arial,sans-serif",overflow:"hidden",alignItems:"center",justifyContent:"center"}}>
   <AbsoluteFill style={{background:"radial-gradient(circle at 75% 70%,#5365a52b,transparent 48%)",transform:`translate(${driftX}px,${driftY}px) scale(1.08)`}}/>
   <div style={{position:"absolute",width:fw,height:fh,borderRadius:settings?.radius??24,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":"0 50px 130px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32",transform:`translate(${tx}px,${ty}px) scale(${totalScale}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
-   {preview?<Video src={src} muted playsInline style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:"contain"}}/>}
+   {preview?<Video src={src} muted playsInline style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:"contain"}}/>}
    {cursor&&<div style={{position:"absolute",left:cx,top:cy,transform:"translate(-3px,-2px)",pointerEvents:"none",filter:"drop-shadow(0 2px 2px #0008)"}}>
     {cursor.click&&<div style={{position:"absolute",width:clickSize,height:clickSize,left:-clickSize/2,top:-clickSize/2,border:"2px solid #a3b6ff",borderRadius:"50%",background:"#a3b6ff22"}}/>}
     <svg width="30" height="38" viewBox="0 0 32 40"><path d="M3 2 L3 31 L10 24 L16 37 L22 34 L16 21 L27 21 Z" fill="white" stroke="#111827" strokeWidth="2.4" strokeLinejoin="round"/></svg>
