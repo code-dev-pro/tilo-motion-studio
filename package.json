@@ -10,7 +10,8 @@
     "render": "tsx src/cli.ts render",
     "video:render": "tsx src/cli.ts all",
     "studio": "pnpm --filter @tilo/studio dev",
-    "studio:build": "pnpm --filter @tilo/studio build"
+    "studio:build": "pnpm --filter @tilo/studio build",
+    "diagnose:pointer": "tsx src/diagnose-pointer.ts"
   },
   "dependencies": {
     "@remotion/bundler": "^4.0.340",
