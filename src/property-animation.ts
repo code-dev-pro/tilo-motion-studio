@@ -1,6 +1,7 @@
 import {z} from "zod";
+import {bezierProgress,defaultBezier,normalizeHandles,type BezierHandles} from "./bezier";
 export const animatedPropertySchema=z.enum(["x","y","scale","rotation","opacity"]);
-export const propertyKeyframeSchema=z.object({t:z.number().min(0).max(86400),value:z.number().finite(),easing:z.enum(["linear","ease-in","ease-out","ease-in-out"]).default("ease-in-out")});
+export const propertyKeyframeSchema=z.object({t:z.number().min(0).max(86400),value:z.number().finite(),easing:z.enum(["linear","ease-in","ease-out","ease-in-out","bezier"]).default("ease-in-out"),bezier:z.object({x1:z.number().min(0).max(1),y1:z.number().min(-2).max(3),x2:z.number().min(0).max(1),y2:z.number().min(-2).max(3)}).optional()});
 export const animationTrackSchema=z.object({id:z.string().regex(/^[a-z0-9-]+$/),property:animatedPropertySchema,keyframes:z.array(propertyKeyframeSchema).max(300)});
 export const animationTracksSchema=z.array(animationTrackSchema).max(20).default([]);
 export type AnimationTrack=z.infer<typeof animationTrackSchema>;
@@ -13,7 +14,7 @@ export function sampleProperty(track:AnimationTrack|undefined,time:number,defaul
  for(let i=1;i<keys.length;i++){
   const a=keys[i-1],b=keys[i];if(time>b.t)continue;
   const u=Math.max(0,Math.min(1,(time-a.t)/Math.max(.00001,b.t-a.t)));
-  const eased=b.easing==="linear"?u:b.easing==="ease-in"?u*u:b.easing==="ease-out"?1-(1-u)*(1-u):u*u*(3-2*u);
+  const eased=b.easing==="bezier"?bezierProgress(u,b.bezier??defaultBezier):b.easing==="linear"?u:b.easing==="ease-in"?u*u:b.easing==="ease-out"?1-(1-u)*(1-u):u*u*(3-2*u);
   return a.value+(b.value-a.value)*eased;
  }
  return keys[keys.length-1].value;
@@ -38,4 +39,9 @@ export function setPropertyEasing(tracks:AnimationTrack[],property:AnimatedPrope
 }
 export function removePropertyKeyframe(tracks:AnimationTrack[],property:AnimatedProperty,index:number):AnimationTrack[]{
  return tracks.map(track=>track.property===property?{...track,keyframes:track.keyframes.filter((_,i)=>i!==index)}:track);
+}
+
+export function setPropertyBezier(tracks:AnimationTrack[],property:AnimatedProperty,index:number,handles:BezierHandles):AnimationTrack[]{
+ const bezier=normalizeHandles(handles);
+ return tracks.map(track=>track.property===property?{...track,keyframes:track.keyframes.map((k,i)=>i===index?{...k,easing:"bezier" as const,bezier}:k)}:track);
 }
