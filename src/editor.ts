@@ -18,7 +18,7 @@ export const editorSchema=z.object({
  shadow:z.boolean().default(true),
  scene:z.object({fit:z.enum(["contain","cover"]),scale:z.number().min(.5).max(1.5),offsetX:z.number().min(-1).max(1),offsetY:z.number().min(-1).max(1)}).default(defaultScene),
  clips:z.array(clipSchema).default([]),
- camera:z.array(z.object({t:z.number().nonnegative(),x:z.number().min(0).max(1),y:z.number().min(0).max(1),scale:z.number().min(1).max(2)})).default([])
+ camera:z.array(z.object({t:z.number().nonnegative(),x:z.number().min(0).max(1),y:z.number().min(0).max(1),scale:z.number().min(1).max(3)})).default([])
 });
 export type EditorSettings=z.infer<typeof editorSchema>;
 export const defaultEditorSettings=():EditorSettings=>editorSchema.parse({});
