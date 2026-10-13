@@ -1,12 +1,13 @@
 "use client";
 import {useRef} from "react";
+import type {MouseEvent as ReactMouseEvent,PointerEvent as ReactPointerEvent} from "react";
 import type {Clip} from "../../../src/timeline";
 import {trimClip,duration as clipDuration} from "../../../src/timeline";
 import {Tooltip} from "./tooltip";
-type Props={clip:Clip;clips:Clip[];index:number;duration:number;sourceDuration:number;selected:boolean;onChange:(clips:Clip[])=>void;onSelect:(event:React.MouseEvent<HTMLButtonElement>)=>void;onDropClip:(from:number,to:number)=>void};
+type Props={clip:Clip;clips:Clip[];index:number;duration:number;sourceDuration:number;selected:boolean;onChange:(clips:Clip[])=>void;onSelect:(event:ReactMouseEvent<HTMLButtonElement>)=>void;onDropClip:(from:number,to:number)=>void};
 export function VideoTimelineClip({clip,clips,index,duration,sourceDuration,selected,onChange,onSelect,onDropClip}:Props){
  const drag=useRef<{x:number;edge:"left"|"right";original:Clip[]}|null>(null);
- function move(e:React.PointerEvent<HTMLSpanElement>){
+ function move(e:ReactPointerEvent<HTMLSpanElement>){
   const d=drag.current,rect=e.currentTarget.parentElement?.parentElement?.getBoundingClientRect();
   if(!d||!rect)return;
   const delta=(e.clientX-d.x)/Math.max(1,rect.width)*duration;
