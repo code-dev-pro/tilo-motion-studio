@@ -128,3 +128,10 @@ html,body{background:var(--background);color:var(--foreground)}
 .audio-trim-handle:focus-visible{outline:2px solid #FFF;outline-offset:2px}
 .spatial-path-overlay{position:absolute;inset:0;width:100%;height:100%;z-index:9;touch-action:none;overflow:visible;pointer-events:none}
 .spatial-path-overlay circle{pointer-events:all}
+
+/* Playhead remains draggable; timeline scale does not stretch when trimming a clip. */
+.timeline-body .playhead-draggable{position:absolute;top:9px;bottom:0;width:16px;height:auto;padding:0;border:0;border-radius:0;background:transparent;pointer-events:auto;cursor:ew-resize;touch-action:none;z-index:30;transform:translateX(-8px);overflow:visible}
+.timeline-body .playhead-draggable::after{content:"";position:absolute;top:12px;bottom:0;left:7px;width:2px;background:var(--accent);pointer-events:none}
+.timeline-body .playhead-draggable::before{content:"";position:absolute;top:0;left:1px;border-left:7px solid transparent;border-right:7px solid transparent;border-top:11px solid var(--accent);pointer-events:none}
+.timeline-body .playhead-draggable:focus-visible{outline:2px solid var(--foreground);outline-offset:2px}
+.timeline-body .ruler{cursor:crosshair;touch-action:none;user-select:none}

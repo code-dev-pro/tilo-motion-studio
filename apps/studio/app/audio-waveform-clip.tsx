@@ -4,9 +4,9 @@ import type {PointerEvent as ReactPointerEvent} from "react";
 import type {AudioTrack} from "../../../src/audio-tracks";
 import {waveformPeaks,clampAudioStart,trimAudioEdge} from "../../../src/audio-editing";
 import {pointerDeltaSeconds} from "../../../src/trim-geometry";
-type Props={track:AudioTrack;recording:string;movieDuration:number;onMove:(start:number)=>void;onTrim:(track:AudioTrack)=>void;onSelect:()=>void};
+type Props={track:AudioTrack;recording:string;movieDuration:number;scaleDuration:number;onMove:(start:number)=>void;onTrim:(track:AudioTrack)=>void;onSelect:()=>void};
 type Gesture={kind:"move"|"left"|"right";x:number;initial:AudioTrack;trackWidth:number};
-export function AudioWaveformClip({track,recording,movieDuration,onMove,onTrim,onSelect}:Props){
+export function AudioWaveformClip({track,recording,movieDuration,scaleDuration,onMove,onTrim,onSelect}:Props){
  const [peaks,setPeaks]=useState<number[]>([]);
  const gesture=useRef<Gesture|null>(null);
  useEffect(()=>{
@@ -28,12 +28,12 @@ export function AudioWaveformClip({track,recording,movieDuration,onMove,onTrim,o
  }
  function update(e:ReactPointerEvent<HTMLElement>){
   const g=gesture.current;if(!g)return;
-  const delta=pointerDeltaSeconds(e.clientX-g.x,g.trackWidth,movieDuration);
+  const delta=pointerDeltaSeconds(e.clientX-g.x,g.trackWidth,scaleDuration);
   if(g.kind==="move")onMove(clampAudioStart(g.initial.start+delta,movieDuration,g.initial.duration));
   else onTrim(trimAudioEdge(g.initial,g.kind,delta,movieDuration));
  }
  function end(e:ReactPointerEvent<HTMLElement>){update(e);gesture.current=null}
- const safeDuration=Math.max(.001,movieDuration);
+ const safeDuration=Math.max(.001,scaleDuration);
  return <div className="clip audio-clip waveform-clip" style={{left:track.start/safeDuration*100+"%",width:Math.max(0,Math.min(track.duration,Math.max(0,movieDuration-track.start)))/safeDuration*100+"%",right:"auto"}}>
   <button type="button" className="waveform-main" aria-label={"Déplacer "+track.name} onClick={onSelect} onPointerDown={e=>begin(e,"move")} onPointerMove={update} onPointerUp={end} onPointerCancel={()=>{gesture.current=null}}>
    {peaks.length?<svg viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true">{peaks.map((p,i)=><line key={i} x1={i+.5} x2={i+.5} y1={14-p*12} y2={14+p*12} stroke="currentColor" strokeWidth=".7" opacity=".8"/>)}</svg>:<span className="waveform-fallback">♫</span>}
