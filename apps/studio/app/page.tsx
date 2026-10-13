@@ -1,6 +1,8 @@
 "use client";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {Player,type PlayerRef} from "@remotion/player";
+import {AudioInspector} from "./audio-inspector";
+import type {AudioTrack} from "../../../src/audio-tracks";
 import {Button as ArcButton} from "@/components/arc/button/button";
 import {Switch as ArcSwitch} from "@/components/arc/switch/switch";
 import {Slider as ArcSlider} from "@/components/arc/slider/slider";
@@ -18,11 +20,11 @@ import type {EnvironmentSettings} from "../../../src/environment";
 import type {CursorSettings} from "../../../src/cursor-settings";
 import type {AdvancedCameraSettings} from "../../../src/advanced-camera";
 import {backgroundCSS,presetColors,type BackgroundSettings} from "../../../src/backgrounds";
-type Settings={canvasBackground:BackgroundSettings;advancedCamera:AdvancedCameraSettings;environment:EnvironmentSettings;cursorSettings:CursorSettings;clips:Clip[];scene:SceneSettings;intro:string;outro:string;zoom:number;autoZoom:boolean;cursor:boolean;background:string;radius:number;shadow:boolean;camera:CameraKeyframe[]};
+type Settings={audioTracks:AudioTrack[];canvasBackground:BackgroundSettings;advancedCamera:AdvancedCameraSettings;environment:EnvironmentSettings;cursorSettings:CursorSettings;clips:Clip[];scene:SceneSettings;intro:string;outro:string;zoom:number;autoZoom:boolean;cursor:boolean;background:string;radius:number;shadow:boolean;camera:CameraKeyframe[]};
 type Detail={manifest:{duration?:number;viewport:{width:number;height:number}},events:MotionEvent[];scenario?:{video?:{duration:number};title?:string};settings:Settings;video:string};
 type Recording={id:string;duration:number};
 type Status={state:string;id?:string;error?:string};
-const defaults:Settings={canvasBackground:{mode:"gradient",color:"#101827",color2:"#405cb5",angle:135,preset:"aurora"},advancedCamera:{mode:"auto",amount:1.4,tiltX:0,tiltY:0,spinZ:0,targetX:.5,targetY:.5,easing:"smooth"},environment:{padding:72,radius:24,light:"none",opacity:.24,softness:.5,angle:-20,vignette:.12,depth:.45},cursorSettings:{visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"},clips:[],scene:{fit:"contain",scale:1,offsetX:0,offsetY:0},intro:"Découvrez Tilo",outro:"Apprendre autrement",zoom:1.06,autoZoom:true,cursor:true,background:"#101827",radius:24,shadow:true,camera:[]};
+const defaults:Settings={audioTracks:[],canvasBackground:{mode:"gradient",color:"#101827",color2:"#405cb5",angle:135,preset:"aurora"},advancedCamera:{mode:"auto",amount:1.4,tiltX:0,tiltY:0,spinZ:0,targetX:.5,targetY:.5,easing:"smooth"},environment:{padding:72,radius:24,light:"none",opacity:.24,softness:.5,angle:-20,vignette:.12,depth:.45},cursorSettings:{visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"},clips:[],scene:{fit:"contain",scale:1,offsetX:0,offsetY:0},intro:"Découvrez Tilo",outro:"Apprendre autrement",zoom:1.06,autoZoom:true,cursor:true,background:"#101827",radius:24,shadow:true,camera:[]};
 const dimensions={landscape:{width:1920,height:1080},portrait:{width:1080,height:1920},square:{width:1080,height:1080}};
 export default function Home(){
  const [url,setUrl]=useState("http://localhost:3000"),[captureId,setCaptureId]=useState("tilo-demo"),[resolution,setResolution]=useState("1600x900");
@@ -32,14 +34,14 @@ export default function Home(){
  const [paneSizes,setPaneSizes]=useState([21,57,22]);
  const [timelineHeight,setTimelineHeight]=useState(230);
  useEffect(()=>{try{const v=JSON.parse(localStorage.getItem("tilo:studio:panes")||"null");if(Array.isArray(v)&&v.length===3&&v.every((n:unknown)=>typeof n==="number"&&n>=0&&n<=100))setPaneSizes(v);const h=Number(localStorage.getItem("tilo:studio:timeline-height"));if(Number.isFinite(h)&&h>=160&&h<=600)setTimelineHeight(h)}catch{}},[]);
- const [tab,setTab]=useState<"camera"|"scene"|"style"|"titles"|"cursor"|"environment"|"background">("camera"),[selectedKey,setSelectedKey]=useState<number|null>(null);
+ const [tab,setTab]=useState<"camera"|"scene"|"style"|"titles"|"cursor"|"environment"|"background"|"audio">("camera"),[selectedKey,setSelectedKey]=useState<number|null>(null);
  const player=useRef<PlayerRef>(null),readySeen=useRef(false);
  const sourceDuration=Math.max(1,detail?.manifest.duration||detail?.scenario?.video?.duration||5);
  const duration=settings.clips.length?settings.clips.reduce((n,c)=>Math.max(n,c.start+clipDuration(c)),0):sourceDuration;
  const fps=30,dims=dimensions[format];
  const patch=(x:Partial<Settings>)=>setSettings(s=>({...s,...x}));
  async function refresh(){const r=await fetch("/api/recordings");if(r.ok)setRecordings((await r.json()).recordings||[])}
- async function load(id:string){const r=await fetch("/api/recordings/"+id);if(!r.ok){setMessage("Capture introuvable");return}const d=await r.json() as Detail;setSelected(id);setDetail(d);setMediaError("");setSettings({...defaults,...d.settings,cursorSettings:d.settings.cursorSettings||defaults.cursorSettings,environment:d.settings.environment||defaults.environment,advancedCamera:d.settings.advancedCamera||defaults.advancedCamera,canvasBackground:d.settings.canvasBackground||defaults.canvasBackground,clips:d.settings.clips||[],scene:d.settings.scene||defaults.scene});setSelectedKey(null);setPlayhead(0)}
+ async function load(id:string){const r=await fetch("/api/recordings/"+id);if(!r.ok){setMessage("Capture introuvable");return}const d=await r.json() as Detail;setSelected(id);setDetail(d);setMediaError("");setSettings({...defaults,...d.settings,cursorSettings:d.settings.cursorSettings||defaults.cursorSettings,environment:d.settings.environment||defaults.environment,advancedCamera:d.settings.advancedCamera||defaults.advancedCamera,canvasBackground:d.settings.canvasBackground||defaults.canvasBackground,audioTracks:d.settings.audioTracks||[],clips:d.settings.clips||[],scene:d.settings.scene||defaults.scene});setSelectedKey(null);setPlayhead(0)}
  useEffect(()=>{void refresh();const timer=setInterval(()=>{void fetch("/api/record").then(r=>r.json()).then((s:Status)=>{setStatus(s);if(s.state==="ready"&&!readySeen.current){readySeen.current=true;void refresh();if(s.id)void load(s.id)}if(s.state!=="ready")readySeen.current=false}).catch(()=>{})},1500);return()=>clearInterval(timer)},[]);
  useEffect(()=>{const ref=player.current;if(!ref)return;const frame=(e:{detail:{frame:number}})=>setPlayhead(e.detail.frame/fps);const play=()=>setPlaying(true),pause=()=>setPlaying(false);ref.addEventListener("frameupdate",frame);ref.addEventListener("play",play);ref.addEventListener("pause",pause);return()=>{ref.removeEventListener("frameupdate",frame);ref.removeEventListener("play",play);ref.removeEventListener("pause",pause)}},[detail,format]);
  const camera=useMemo(()=>detail?(settings.camera.length?settings.camera:settings.advancedCamera.mode==="manual"?[]:settings.autoZoom?buildCameraTrack(detail.events,duration,detail.manifest.viewport,{zoom:settings.advancedCamera.amount,maxZoom:3}):[]):[],[detail,settings.camera,settings.autoZoom,settings.advancedCamera,duration]);
