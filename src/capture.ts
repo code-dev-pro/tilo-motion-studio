@@ -34,7 +34,7 @@ export async function perform(page:Page,a:Scenario["actions"][number],base:strin
   await page.mouse.up();break;
  }
  case "bridge":await page.evaluate(async ({method,args})=>{
-  const api=(window as Window&{__TILO_DEMO__?:Record<string,(...x:unknown[])=>Promise<void>>}).__TILO_DEMO__;
+  const api=(window as unknown as {__TILO_DEMO__?:Record<string,(...x:unknown[])=>Promise<void>>}).__TILO_DEMO__;
   if(!api?.[method])throw Error("Demo Bridge unavailable: "+method);
   const fn:((...params:unknown[])=>Promise<void>)=api[method];
   await fn(...args);
