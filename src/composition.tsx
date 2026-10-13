@@ -12,6 +12,8 @@ import {CursorOverlay} from "./cursor-overlay";
 import {defaultCursorSettings} from "./cursor-settings";
 import {mixedAudioGain} from "./audio-editing";
 import {defaultAudioMixer} from "./audio-mixer";
+import {spatialPosition} from "./spatial-handles";
+import {spatialPoints} from "./spatial-path";
 import {sampleProperty,propertyDefaults} from "./property-animation";
 export type Props={src:string;title:string;intro:string;outro:string;zoom:number;events?:MotionEvent[];camera?:CameraKeyframe[];viewport?:{width:number;height:number};settings?:EditorSettings;preview?:boolean};
 export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={width:1920,height:1080},settings,preview=false}:Props){
@@ -20,6 +22,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const sourceTime=settings?.clips?.length?sourceTimeAt(settings.clips,t):t;
  const cam=interpolateTrack(camera,sourceTime??t),cursor=settings?.cursor===false?null:smoothCursor(events,sourceTime??t);
  const prop=(name:keyof typeof propertyDefaults)=>sampleProperty(settings?.animationTracks.find(a=>a.property===name),t,propertyDefaults[name]);
+ const spatial=settings?.spatialHandles?.length?spatialPosition(spatialPoints(settings.animationTracks),settings.spatialHandles,t):null;
  const advanced=settings?.advancedCamera;
  const scene=settings?.scene;
  const environment=settings?.environment??defaultEnvironment();
@@ -40,7 +43,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const clickSize=cursor?.click?48:0;
  return <AbsoluteFill style={{background:backgroundCSS(settings?.canvasBackground??defaultBackground()),color:"white",fontFamily:"Arial,sans-serif",overflow:"hidden",alignItems:"center",justifyContent:"center"}}>
   <AbsoluteFill style={{background:"radial-gradient(circle at 75% 70%,#5365a52b,transparent 48%)",transform:`translate(${driftX}px,${driftY}px) scale(1.08)`}}/>
-  <div style={{position:"absolute",width:fw,height:fh,borderRadius:environment.radius,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":`0 ${25+environment.depth*70}px ${50+environment.depth*120}px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32`,opacity:prop("opacity"),transform:`perspective(1800px) translate(${tx+prop("x")}px,${ty+prop("y")}px) rotateZ(${prop("rotation")}deg) rotateX(${advanced?.tiltX??0}deg) rotateY(${advanced?.tiltY??0}deg) rotateZ(${advanced?.spinZ??0}deg) scale(${totalScale*prop("scale")}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
+  <div style={{position:"absolute",width:fw,height:fh,borderRadius:environment.radius,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":`0 ${25+environment.depth*70}px ${50+environment.depth*120}px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32`,opacity:prop("opacity"),transform:`perspective(1800px) translate(${tx+(spatial?.x??prop("x"))}px,${ty+(spatial?.y??prop("y"))}px) rotateZ(${prop("rotation")}deg) rotateX(${advanced?.tiltX??0}deg) rotateY(${advanced?.tiltY??0}deg) rotateZ(${advanced?.spinZ??0}deg) scale(${totalScale*prop("scale")}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
    {settings?.clips?.length?settings.clips.map(clip=><Sequence key={clip.id} from={Math.round(clip.start*fps)} durationInFrames={Math.max(1,Math.round((clip.sourceOut-clip.sourceIn)*fps))} layout="none">{preview?<Video src={src} muted playsInline startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>}</Sequence>):(preview?<Video src={src} muted playsInline style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>)} 
    <CursorOverlay events={events} time={sourceTime??t} width={fw} height={fh} viewport={viewport} settings={{...(settings?.cursorSettings??defaultCursorSettings()),visible:settings?.cursor!==false&&(settings?.cursorSettings?.visible??true)}}/>
   </div>
