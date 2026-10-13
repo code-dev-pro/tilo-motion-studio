@@ -1,12 +1,13 @@
 "use client";
 import {useRef} from "react";
-import {bezierProgress,defaultBezier,normalizeHandles,type BezierHandles} from "../../../src/bezier";
+import type {PointerEvent as ReactPointerEvent} from "react";
+import {normalizeHandles,type BezierHandles} from "../../../src/bezier";
 type Props={handles:BezierHandles;onChange:(handles:BezierHandles)=>void};
 export function BezierCurveEditor({handles,onChange}:Props){
  const ref=useRef<SVGSVGElement>(null);
  const drag=useRef<"in"|"out"|null>(null);
  const h=normalizeHandles(handles);
- function update(e:React.PointerEvent<SVGSVGElement>){
+ function update(e:ReactPointerEvent<SVGSVGElement>){
   if(!drag.current||!ref.current)return;
   const r=ref.current.getBoundingClientRect();
   const x=Math.max(0,Math.min(1,(e.clientX-r.left)/Math.max(1,r.width)));
