@@ -25,3 +25,17 @@ export function upsertPropertyKeyframe(tracks:AnimationTrack[],property:Animated
  if(!existing)return [...tracks,{id,property,keyframes:[key]}];
  return tracks.map(track=>track.property!==property?track:{...track,keyframes:[...track.keyframes.filter(k=>Math.abs(k.t-time)>1/60),key].sort((a,b)=>a.t-b.t)});
 }
+
+export function movePropertyKeyframe(tracks:AnimationTrack[],property:AnimatedProperty,index:number,time:number):AnimationTrack[]{
+ return tracks.map(track=>{
+  if(track.property!==property||index<0||index>=track.keyframes.length)return track;
+  const next=track.keyframes.map((k,i)=>i===index?{...k,t:Math.max(0,Math.round(time*30)/30)}:k);
+  return {...track,keyframes:next.sort((a,b)=>a.t-b.t)};
+ });
+}
+export function setPropertyEasing(tracks:AnimationTrack[],property:AnimatedProperty,index:number,easing:z.infer<typeof propertyKeyframeSchema>["easing"]):AnimationTrack[]{
+ return tracks.map(track=>track.property===property?{...track,keyframes:track.keyframes.map((k,i)=>i===index?{...k,easing}:k)}:track);
+}
+export function removePropertyKeyframe(tracks:AnimationTrack[],property:AnimatedProperty,index:number):AnimationTrack[]{
+ return tracks.map(track=>track.property===property?{...track,keyframes:track.keyframes.filter((_,i)=>i!==index)}:track);
+}
