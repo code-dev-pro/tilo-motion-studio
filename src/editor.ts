@@ -1,8 +1,10 @@
 import {z} from "zod";
+import {environmentSchema} from "./environment";
 import {cursorSettingsSchema} from "./cursor-settings";
 import {clipSchema} from "./timeline";
 import {defaultScene} from "./scene";
 export const editorSchema=z.object({
+ environment:environmentSchema.default(environmentSchema.parse({})),
  cursorSettings:cursorSettingsSchema.default(cursorSettingsSchema.parse({})),
  intro:z.string().max(160).default("Découvrez Tilo"),
  outro:z.string().max(160).default("Apprendre autrement"),
