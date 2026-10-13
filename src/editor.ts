@@ -1,4 +1,5 @@
 import {z} from "zod";
+import {defaultScene} from "./scene";
 export const editorSchema=z.object({
  intro:z.string().max(160).default("Découvrez Tilo"),
  outro:z.string().max(160).default("Apprendre autrement"),
@@ -8,6 +9,7 @@ export const editorSchema=z.object({
  background:z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#101827"),
  radius:z.number().int().min(0).max(48).default(24),
  shadow:z.boolean().default(true),
+ scene:z.object({fit:z.enum(["contain","cover"]),scale:z.number().min(.5).max(1.5),offsetX:z.number().min(-1).max(1),offsetY:z.number().min(-1).max(1)}).default(defaultScene),
  camera:z.array(z.object({t:z.number().nonnegative(),x:z.number().min(0).max(1),y:z.number().min(0).max(1),scale:z.number().min(1).max(2)})).default([])
 });
 export type EditorSettings=z.infer<typeof editorSchema>;
