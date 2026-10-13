@@ -105,3 +105,15 @@ html,body{background:var(--background);color:var(--foreground)}
 .video-timeline-clip{display:flex;align-items:center;justify-content:center;overflow:visible}.video-clip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}.video-trim-handle{position:absolute;top:0;bottom:0;width:9px;background:var(--foreground);opacity:.65;cursor:ew-resize;touch-action:none}.video-trim-handle.left{left:0;border-radius:4px 0 0 4px}.video-trim-handle.right{right:0;border-radius:0 4px 4px 0}.video-timeline-clip.selected .video-trim-handle,.video-timeline-clip:hover .video-trim-handle{opacity:1}
 
 .scene-position-overlay{position:absolute;inset:0;cursor:move;touch-action:none;border:2px dashed var(--accent);z-index:8}.scene-position-label{position:absolute;left:12px;top:12px;padding:5px 9px;border-radius:6px;background:var(--surface);color:var(--foreground);pointer-events:none}.scene-position-crosshair{position:absolute;left:50%;top:50%;font-size:30px;color:var(--accent);transform:translate(-50%,-50%);pointer-events:none}.animation-keyframe-options{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border);border-radius:10px}
+
+/* Interaction fixes: keep resize grips separate from clip drag and panel resize. */
+.video-timeline-clip{padding:0!important;overflow:visible!important;display:flex;align-items:stretch;min-width:0}
+.video-clip-main{display:block;width:100%;height:100%;border:0;background:transparent;color:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 12px;cursor:grab}
+.video-clip-main:active{cursor:grabbing}
+.video-trim-handle{position:absolute;z-index:6;top:-2px;bottom:-2px;width:12px;background:#e5e5e5;border:1px solid #666;opacity:1;cursor:ew-resize;touch-action:none;display:flex;align-items:center;justify-content:center}
+.video-trim-handle.left{left:-1px;border-radius:5px 2px 2px 5px}
+.video-trim-handle.right{right:-1px;border-radius:2px 5px 5px 2px}
+.video-trim-grip{width:2px;height:12px;background:#555;border-radius:2px;box-shadow:3px 0 0 #555}
+.video-trim-handle:focus-visible{outline:2px solid white;outline-offset:2px}
+.bezier-curve-editor svg{display:block;max-width:100%;overflow:hidden;touch-action:none}
+.bezier-curve-editor svg path{vector-effect:non-scaling-stroke}
