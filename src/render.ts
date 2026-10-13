@@ -22,7 +22,7 @@ export async function render(s:Scenario,format:Format){
   const props={
    src:`${media.baseUrl}/${encodeURIComponent(s.id)}/capture.webm`,
    title:s.title,intro:s.video.intro,outro:s.video.outro,zoom:s.video.zoom,
-   events,camera:settings.camera.length?settings.camera:settings.autoZoom?buildCameraTrack(events,s.video.duration,s.viewport):[],viewport:s.viewport,settings
+   events,camera:settings.camera.length?settings.camera:settings.advancedCamera.mode==="manual"?[]:settings.autoZoom?buildCameraTrack(events,s.video.duration,s.viewport,{zoom:settings.advancedCamera.amount,maxZoom:3}):[],viewport:s.viewport,settings
   };
   const composition=await selectComposition({serveUrl,id:"TiloPromo",inputProps:props});
   const dest=join(dir,format+".mp4");
