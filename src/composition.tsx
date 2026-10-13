@@ -12,12 +12,14 @@ import {CursorOverlay} from "./cursor-overlay";
 import {defaultCursorSettings} from "./cursor-settings";
 import {mixedAudioGain} from "./audio-editing";
 import {defaultAudioMixer} from "./audio-mixer";
+import {sampleProperty,propertyDefaults} from "./property-animation";
 export type Props={src:string;title:string;intro:string;outro:string;zoom:number;events?:MotionEvent[];camera?:CameraKeyframe[];viewport?:{width:number;height:number};settings?:EditorSettings;preview?:boolean};
 export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={width:1920,height:1080},settings,preview=false}:Props){
  const f=useCurrentFrame(),{fps,durationInFrames,width,height}=useVideoConfig();
  const t=f/fps,duration=durationInFrames/fps;
  const sourceTime=settings?.clips?.length?sourceTimeAt(settings.clips,t):t;
  const cam=interpolateTrack(camera,sourceTime??t),cursor=settings?.cursor===false?null:smoothCursor(events,sourceTime??t);
+ const prop=(name:keyof typeof propertyDefaults)=>sampleProperty(settings?.animationTracks.find(a=>a.property===name),t,propertyDefaults[name]);
  const advanced=settings?.advancedCamera;
  const scene=settings?.scene;
  const environment=settings?.environment??defaultEnvironment();
