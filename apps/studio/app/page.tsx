@@ -13,6 +13,7 @@ import type {SpatialHandle} from "../../../src/spatial-handles";
 import {setPropertyEasing,removePropertyKeyframe,type AnimatedProperty} from "../../../src/property-animation";
 import {VideoTimelineClip} from "./video-timeline-clip";
 import {TimelinePlayhead} from "./timeline-playhead";
+import {copyProjectName} from "../../../src/project-management";
 import {safeTimelineDuration,timelinePercentage,timeFromTimelinePointer,rulerTicks} from "../../../src/timeline-scale";
 import {Tooltip} from "./tooltip";
 import type {AnimationTrack} from "../../../src/property-animation";
@@ -69,7 +70,7 @@ export default function Home(){
  const redo=()=>{history.current=redoHistory(history.current);setSettings(history.current.present);setCanUndo(history.current.past.length>0);setCanRedo(history.current.future.length>0)};
  async function refresh(){const r=await fetch("/api/recordings");if(r.ok)setRecordings((await r.json()).recordings||[])}
  async function duplicateProject(id:string){
-  const suggested=id+"-copy";const name=window.prompt("Nom de la copie",suggested);
+  const suggested=copyProjectName(id,recordings.map(r=>r.id));const name=window.prompt("Nom de la copie",suggested);
   if(name===null)return;
   const next=name.trim().toLowerCase();
   if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(next)||next.length>80){setMessage("Nom invalide : lettres minuscules, chiffres et tirets");return}
