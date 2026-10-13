@@ -9,6 +9,7 @@ export const audioTrackSchema=z.object({
  duration:z.number().positive().max(86400),
  volume:z.number().min(0).max(2).default(1),
  muted:z.boolean().default(false),
+ solo:z.boolean().default(false),
  fadeIn:z.number().min(0).max(30).default(0),
  fadeOut:z.number().min(0).max(30).default(0),
  loop:z.boolean().default(false)

@@ -4,8 +4,9 @@ import {Button} from "@/components/arc/button/button";
 import {Slider} from "@/components/arc/slider/slider";
 import {Switch} from "@/components/arc/switch/switch";
 import type {AudioTrack} from "../../../src/audio-tracks";
-type Props={recording:string;duration:number;tracks:AudioTrack[];onChange:(tracks:AudioTrack[])=>void};
-export function AudioInspector({recording,duration,tracks,onChange}:Props){
+import type {AudioMixerSettings} from "../../../src/audio-mixer";
+type Props={recording:string;duration:number;tracks:AudioTrack[];onChange:(tracks:AudioTrack[])=>void;mixer:AudioMixerSettings;onMixerChange:(mixer:AudioMixerSettings)=>void};
+export function AudioInspector({recording,duration,tracks,onChange,mixer,onMixerChange}:Props){
  const input=useRef<HTMLInputElement>(null);
  const microphone=useRef<MediaRecorder|null>(null);
  const micStream=useRef<MediaStream|null>(null);
@@ -28,11 +29,12 @@ export function AudioInspector({recording,duration,tracks,onChange}:Props){
    const audio=new window.Audio(data.url);
    const measured=await new Promise<number>(resolve=>{audio.onloadedmetadata=()=>resolve(Number.isFinite(audio.duration)?audio.duration:duration);audio.onerror=()=>resolve(duration)});
    const id="track-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);
-   onChange([...tracks,{id,file:data.file,kind:overrideKind??kind,name:file.name.slice(0,100),start:0,trimStart:0,duration:Math.max(.1,Math.min(measured,duration)),volume:(overrideKind??kind)==="ambience"?.3:1,muted:false,fadeIn:(overrideKind??kind)==="ambience"?.8:0,fadeOut:(overrideKind??kind)==="ambience"?.8:0,loop:(overrideKind??kind)==="ambience"}]);
+   onChange([...tracks,{id,file:data.file,kind:overrideKind??kind,name:file.name.slice(0,100),start:0,trimStart:0,duration:Math.max(.1,Math.min(measured,duration)),volume:(overrideKind??kind)==="ambience"?.3:1,muted:false,solo:false,fadeIn:(overrideKind??kind)==="ambience"?.8:0,fadeOut:(overrideKind??kind)==="ambience"?.8:0,loop:(overrideKind??kind)==="ambience"}]);
   }catch(e){setError(String(e))}finally{setBusy(false);if(input.current)input.current.value=""}
  }
  return <section className="audio-inspector">
   <div className="section-title">Audio & narration</div>
+  <div className="audio-track-editor"><strong>Mixage général</strong><Slider label="Volume master" min={0} max={2} step={.01} value={mixer.masterVolume} onValueChange={masterVolume=>onMixerChange({...mixer,masterVolume})} format={v=>Math.round(v*100)+" %"}/><div className="toggle">Ducking automatique <Switch checked={mixer.duckingEnabled} onCheckedChange={duckingEnabled=>onMixerChange({...mixer,duckingEnabled})} aria-label="Ducking automatique"/></div>{mixer.duckingEnabled&&<><Slider label="Musique sous la voix" min={0} max={1} step={.01} value={mixer.duckingLevel} onValueChange={duckingLevel=>onMixerChange({...mixer,duckingLevel})} format={v=>Math.round(v*100)+" %"}/><Slider label="Attaque" min={.01} max={3} step={.01} value={mixer.attack} onValueChange={attack=>onMixerChange({...mixer,attack})} format={v=>v.toFixed(2)+" s"}/><Slider label="Relâchement" min={.01} max={3} step={.01} value={mixer.release} onValueChange={release=>onMixerChange({...mixer,release})} format={v=>v.toFixed(2)+" s"}/></>}</div>
   <div className="tabbar"><button className={"tab "+(kind==="ambience"?"active":"")} onClick={()=>setKind("ambience")}>Ambiance</button><button className={"tab "+(kind==="voiceover"?"active":"")} onClick={()=>setKind("voiceover")}>Commentaire</button></div>
   <input ref={input} type="file" accept=".mp3,.wav,.m4a,.ogg,.webm,audio/*" hidden onChange={e=>{const f=e.target.files?.[0];if(f)void upload(f)}}/>
   <Button variant="secondary" disabled={busy||!recording} onClick={()=>input.current?.click()}>{busy?"Import…":kind==="ambience"?"Ajouter une ambiance":"Ajouter un commentaire audio"}</Button>
@@ -41,6 +43,7 @@ export function AudioInspector({recording,duration,tracks,onChange}:Props){
   {error&&<p role="alert" style={{color:"var(--text-secondary)"}}>{error}</p>}
   {tracks.map(track=><div className="audio-track-editor" key={track.id}>
    <div className="section-title"><strong>{track.kind==="ambience"?"♫":"🎙"} {track.name}</strong><button className="btn icon" title="Supprimer la piste" onClick={()=>onChange(tracks.filter(t=>t.id!==track.id))}>×</button></div>
+   <div className="toggle">Solo <Switch aria-label={"Solo "+track.name} checked={track.solo} onCheckedChange={solo=>patch(track.id,{solo})}/></div>
    <div className="toggle">Activer <Switch aria-label={"Activer "+track.name} checked={!track.muted} onCheckedChange={v=>patch(track.id,{muted:!v})}/></div>
    <Slider label="Volume" min={0} max={2} step={.01} value={track.volume} format={v=>Math.round(v*100)+" %"} onValueChange={volume=>patch(track.id,{volume})}/>
    <Slider label="Début" min={0} max={Math.max(duration,1)} step={.1} value={Math.min(track.start,Math.max(duration,1))} format={v=>v.toFixed(1)+" s"} onValueChange={start=>patch(track.id,{start})}/>
