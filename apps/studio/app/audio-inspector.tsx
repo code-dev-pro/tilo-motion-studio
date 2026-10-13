@@ -3,7 +3,7 @@ import React,{useRef,useState} from "react";
 import {Button} from "@/components/arc/button/button";
 import {Slider} from "@/components/arc/slider/slider";
 import {Switch} from "@/components/arc/switch/switch";
-import type {AudioTrack} from "../../../../src/audio-tracks";
+import type {AudioTrack} from "../../../src/audio-tracks";
 type Props={recording:string;duration:number;tracks:AudioTrack[];onChange:(tracks:AudioTrack[])=>void};
 export function AudioInspector({recording,duration,tracks,onChange}:Props){
  const input=useRef<HTMLInputElement>(null);
