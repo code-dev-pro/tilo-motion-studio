@@ -12,14 +12,15 @@ const advancedCameraSchema=z.object({mode:z.enum(["auto","manual","animate"]),am
 const advancedCameraDefaults={mode:"auto" as const,amount:1.4,tiltX:0,tiltY:0,spinZ:0,targetX:.5,targetY:.5,easing:"smooth" as const};
 const canvasBackgroundSchema=z.object({mode:z.enum(["color","gradient","preset"]),color:z.string().regex(/^#[0-9a-fA-F]{6}$/),color2:z.string().regex(/^#[0-9a-fA-F]{6}$/),angle:z.number().min(0).max(360),preset:z.enum(["aurora","sunset","ocean","violet","graphite","peach","midnight","mint","ember"])});
 const canvasBackgroundDefaults={mode:"gradient" as const,color:"#101827",color2:"#405cb5",angle:135,preset:"aurora" as const};
-const settingsSchema=z.object({canvasBackground:canvasBackgroundSchema.default(canvasBackgroundDefaults),advancedCamera:advancedCameraSchema.default(advancedCameraDefaults),environment:environmentSchema.default(environmentDefaults),cursorSettings:cursorSettingsSchema.default({visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"}),
+const audioTrackSchema=z.object({id:z.string(),file:z.string(),kind:z.enum(["ambience","voiceover"]),name:z.string(),start:z.number(),trimStart:z.number(),duration:z.number(),volume:z.number(),muted:z.boolean(),fadeIn:z.number(),fadeOut:z.number(),loop:z.boolean()});
+const settingsSchema=z.object({audioTracks:z.array(audioTrackSchema).max(32).default([]),canvasBackground:canvasBackgroundSchema.default(canvasBackgroundDefaults),advancedCamera:advancedCameraSchema.default(advancedCameraDefaults),environment:environmentSchema.default(environmentDefaults),cursorSettings:cursorSettingsSchema.default({visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"}),
  clips:z.array(clipSchema).default([]),
  scene:sceneSchema.default({fit:"contain",scale:1,offsetX:0,offsetY:0}),
  intro:z.string().max(160),outro:z.string().max(160),zoom:z.number().min(1).max(1.7),autoZoom:z.boolean(),cursor:z.boolean(),
  background:z.string().regex(/^#[0-9a-fA-F]{6}$/),radius:z.number().int().min(0).max(48),shadow:z.boolean(),
  camera:z.array(z.object({t:z.number().nonnegative(),x:z.number().min(0).max(1),y:z.number().min(0).max(1),scale:z.number().min(1).max(2)}))
 });
-const defaults={canvasBackground:canvasBackgroundDefaults,advancedCamera:advancedCameraDefaults,environment:environmentDefaults,cursorSettings:{visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"},clips:[],scene:{fit:"contain",scale:1,offsetX:0,offsetY:0},intro:"Découvrez Tilo",outro:"Apprendre autrement",zoom:1.06,autoZoom:true,cursor:true,background:"#101827",radius:24,shadow:true,camera:[]};
+const defaults={audioTracks:[],canvasBackground:canvasBackgroundDefaults,advancedCamera:advancedCameraDefaults,environment:environmentDefaults,cursorSettings:{visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"},clips:[],scene:{fit:"contain",scale:1,offsetX:0,offsetY:0},intro:"Découvrez Tilo",outro:"Apprendre autrement",zoom:1.06,autoZoom:true,cursor:true,background:"#101827",radius:24,shadow:true,camera:[]};
 function permitted(req:Request){const host=req.headers.get("host")||"",origin=req.headers.get("origin");return /^(localhost|127\.0\.0\.1):3333$/.test(host)&&(!origin||new URL(origin).host===host)}
 export async function GET(req:Request,{params}:{params:Promise<{id:string}>}){
  if(!permitted(req))return NextResponse.json({error:"Local only"},{status:403});
