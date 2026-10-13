@@ -1,7 +1,7 @@
 import React from "react";
 import {AbsoluteFill,OffthreadVideo,Video,Audio,Sequence,interpolate,useCurrentFrame,useVideoConfig} from "remotion";
 import type {CameraKeyframe,MotionEvent} from "./cinematic";
-import {interpolateTrack,smoothCursor} from "./cinematic-v2";
+import {interpolateTrack} from "./cinematic-v2";
 import {fitInside} from "./layout";
 import type {EditorSettings} from "./editor";
 import {sourceTimeAt} from "./timeline";
@@ -20,7 +20,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const f=useCurrentFrame(),{fps,durationInFrames,width,height}=useVideoConfig();
  const t=f/fps,duration=durationInFrames/fps;
  const sourceTime=settings?.clips?.length?sourceTimeAt(settings.clips,t):t;
- const cam=interpolateTrack(camera,sourceTime??t),cursor=settings?.cursor===false?null:smoothCursor(events,sourceTime??t);
+ const cam=interpolateTrack(camera,sourceTime??t);
  const prop=(name:keyof typeof propertyDefaults)=>sampleProperty(settings?.animationTracks.find(a=>a.property===name),t,propertyDefaults[name]);
  const spatial=settings?.spatialHandles?.length?spatialPosition(spatialPoints(settings.animationTracks),settings.spatialHandles,t):null;
  const advanced=settings?.advancedCamera;
@@ -29,7 +29,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const bounds={width:Math.max(1,width-environment.padding*2),height:Math.max(1,height-environment.padding*2)};
  const frame=scene?.fit==="cover"?{width:bounds.width,height:bounds.height}:fitInside(viewport,bounds);
  const fw=frame.width*(scene?.scale??1),fh=frame.height*(scene?.scale??1);
- const cx=cursor?cursor.x*fw/viewport.width:0,cy=cursor?cursor.y*fh/viewport.height:0;
+
  const totalScale=(advanced?.mode==="manual"?(advanced.amount):cam.scale)*(settings?.zoom??zoom);
  // Position the focal point at the center of the output frame after scaling.
  const focalX=advanced?.mode==="manual"?advanced.targetX:cam.x;
@@ -40,7 +40,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const opening=t<1.6,closing=t>duration-1.6;
  const overlayOpacity=opening?Math.min(1,Math.max(0,(1.6-t)/.4)):closing?Math.min(1,Math.max(0,(t-(duration-1.6))/.4)):0;
  const driftX=Math.sin(t*.28)*width*.012,driftY=Math.cos(t*.22)*height*.012;
- const clickSize=cursor?.click?48:0;
+
  return <AbsoluteFill style={{background:backgroundCSS(settings?.canvasBackground??defaultBackground()),color:"white",fontFamily:"Arial,sans-serif",overflow:"hidden",alignItems:"center",justifyContent:"center"}}>
   <AbsoluteFill style={{background:"radial-gradient(circle at 75% 70%,#5365a52b,transparent 48%)",transform:`translate(${driftX}px,${driftY}px) scale(1.08)`}}/>
   <div style={{position:"absolute",width:fw,height:fh,borderRadius:environment.radius,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":`0 ${25+environment.depth*70}px ${50+environment.depth*120}px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32`,opacity:prop("opacity"),transform:`perspective(1800px) translate(${tx+(spatial?.x??prop("x"))}px,${ty+(spatial?.y??prop("y"))}px) rotateZ(${prop("rotation")}deg) rotateX(${advanced?.tiltX??0}deg) rotateY(${advanced?.tiltY??0}deg) rotateZ(${advanced?.spinZ??0}deg) scale(${totalScale*prop("scale")}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
