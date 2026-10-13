@@ -33,6 +33,7 @@ async function collectFrameStats(){return Promise.all(page.frames().map(async fr
 let frameStats:Awaited<ReturnType<typeof collectFrameStats>>=[];
 let syntheticProbe:{bridgeDelta:number;stats:Awaited<ReturnType<typeof collectFrameStats>>;error?:string}|null=null;
 let diagnosticsError:string|null=null;
+let domProbe:{before:number;after:number;stats:Awaited<ReturnType<typeof collectFrameStats>>;error?:string}|null=null;
 async function finish(){
  if(stopping)return;stopping=true;
  const duration=Math.max(1,(Date.now()-start)/1000);
@@ -43,7 +44,7 @@ async function finish(){
   if(video)await copyFile(await video.path(),join(dir,"capture.webm"));
   await writeFile(join(dir,"events.json"),JSON.stringify(events,null,2));
   const summary=recordingEventSummary(events);
-  await writeFile(join(dir,"event-diagnostics.json"),JSON.stringify({bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,diagnosticsError},null,2));
+  await writeFile(join(dir,"event-diagnostics.json"),JSON.stringify({bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError},null,2));
   console.log("RECORDING_EVENTS",JSON.stringify(summary));
   if(events.length===0)console.warn("RECORDING_WARNING: no pointer events captured. Check that interactions occurred in the Chromium recording window.");
   await writeFile(join(dir,"manifest.json"),JSON.stringify({scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url},null,2));
@@ -71,5 +72,16 @@ try{await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:20000});
   syntheticProbe={bridgeDelta:bridgeCount-before,stats:await collectFrameStats()};
   console.log("RECORDER_SYNTHETIC_PROBE",JSON.stringify(syntheticProbe));
  }catch(e){syntheticProbe={bridgeDelta:bridgeCount-before,stats:[],error:String(e)};console.warn("RECORDER_SYNTHETIC_PROBE_FAILED",String(e))}
+ const domBefore=bridgeCount;
+ try{
+  await page.evaluate(()=>{
+   const target=document.elementFromPoint(Math.round(innerWidth/2),Math.round(innerHeight/2))??document.body;
+   target.dispatchEvent(new PointerEvent("pointermove",{bubbles:true,clientX:150,clientY:120,pointerId:1,pointerType:"mouse"}));
+   target.dispatchEvent(new MouseEvent("mousemove",{bubbles:true,clientX:160,clientY:130}));
+  });
+  await page.waitForTimeout(150);
+  domProbe={before:domBefore,after:bridgeCount,stats:await collectFrameStats()};
+  console.log("RECORDER_DOM_PROBE",JSON.stringify(domProbe));
+ }catch(e){domProbe={before:domBefore,after:bridgeCount,stats:[],error:String(e)}}
  start=Date.now();console.log("RECORDING_READY",options.id)}
 catch(e){console.error("RECORDING_FAILED",e);await browser.close();process.exit(1)}
