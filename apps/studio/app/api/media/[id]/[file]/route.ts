@@ -7,10 +7,10 @@ export const runtime="nodejs";
 export async function GET(req:Request,{params}:{params:Promise<{id:string;file:string}>}){
  const host=req.headers.get("host")||"";if(!/^(localhost|127\.0\.0\.1):3333$/.test(host))return NextResponse.json({error:"Local only"},{status:403});
  const {id,file}=await params;
- if(!/^[a-z0-9-]+$/.test(id)||!["capture.webm","landscape.mp4","portrait.mp4","square.mp4"].includes(file))return NextResponse.json({error:"Invalid media"},{status:400});
+ if(!/^[a-z0-9-]+$/.test(id)||!["capture.webm","landscape.mp4","portrait.mp4","square.mp4"].includes(file)&&!/^audio-[a-z0-9-]+\.(mp3|wav|m4a|ogg|webm)$/.test(file))return NextResponse.json({error:"Invalid media"},{status:400});
  const path=join(resolve(process.cwd(),"../../output"),id,file);
  try{
-  const info=await stat(path),range=req.headers.get("range"),type=file.endsWith(".webm")?"video/webm":"video/mp4";
+  const info=await stat(path),range=req.headers.get("range"),type=file.startsWith("audio-")?({mp3:"audio/mpeg",wav:"audio/wav",m4a:"audio/mp4",ogg:"audio/ogg",webm:"audio/webm"} as Record<string,string>)[file.split(".").pop()||""]:(file.endsWith(".webm")?"video/webm":"video/mp4");
   if(range){
    const m=/^bytes=(\d+)-(\d*)$/.exec(range);
    if(!m)return new Response(null,{status:416});
