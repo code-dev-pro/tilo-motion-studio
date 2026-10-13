@@ -7,6 +7,7 @@ import type {EditorSettings} from "./editor";
 import {sourceTimeAt} from "./timeline";
 import {LightingOverlay} from "./lighting-overlay";
 import {defaultEnvironment} from "./environment";
+import {backgroundCSS,defaultBackground} from "./backgrounds";
 import {CursorOverlay} from "./cursor-overlay";
 import {defaultCursorSettings} from "./cursor-settings";
 export type Props={src:string;title:string;intro:string;outro:string;zoom:number;events?:MotionEvent[];camera?:CameraKeyframe[];viewport?:{width:number;height:number};settings?:EditorSettings;preview?:boolean};
@@ -33,7 +34,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const overlayOpacity=opening?Math.min(1,Math.max(0,(1.6-t)/.4)):closing?Math.min(1,Math.max(0,(t-(duration-1.6))/.4)):0;
  const driftX=Math.sin(t*.28)*width*.012,driftY=Math.cos(t*.22)*height*.012;
  const clickSize=cursor?.click?48:0;
- return <AbsoluteFill style={{background:settings?.background??"radial-gradient(ellipse at 24% 18%,#324c8c 0%,#1a294b 38%,#0b1121 90%)",color:"white",fontFamily:"Arial,sans-serif",overflow:"hidden",alignItems:"center",justifyContent:"center"}}>
+ return <AbsoluteFill style={{background:backgroundCSS(settings?.canvasBackground??defaultBackground()),color:"white",fontFamily:"Arial,sans-serif",overflow:"hidden",alignItems:"center",justifyContent:"center"}}>
   <AbsoluteFill style={{background:"radial-gradient(circle at 75% 70%,#5365a52b,transparent 48%)",transform:`translate(${driftX}px,${driftY}px) scale(1.08)`}}/>
   <div style={{position:"absolute",width:fw,height:fh,borderRadius:environment.radius,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":`0 ${25+environment.depth*70}px ${50+environment.depth*120}px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32`,transform:`perspective(1800px) translate(${tx}px,${ty}px) rotateX(${advanced?.tiltX??0}deg) rotateY(${advanced?.tiltY??0}deg) rotateZ(${advanced?.spinZ??0}deg) scale(${totalScale}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
    {settings?.clips?.length?settings.clips.map(clip=><Sequence key={clip.id} from={Math.round(clip.start*fps)} durationInFrames={Math.max(1,Math.round((clip.sourceOut-clip.sourceIn)*fps))} layout="none">{preview?<Video src={src} muted playsInline startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>}</Sequence>):(preview?<Video src={src} muted playsInline style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>)} 
