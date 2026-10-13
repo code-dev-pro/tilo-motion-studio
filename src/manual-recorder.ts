@@ -4,6 +4,7 @@ import {mkdir,copyFile,writeFile,access,rm} from "node:fs/promises";
 import {resolve,join} from "node:path";
 import {recordingOptions} from "./recording";
 import type {MotionEvent} from "./cinematic";
+import {normalizeRecorderEvent,recordingEventSummary} from "./recorder-events";
 import {defineScenario} from "./core";
 const options=recordingOptions.parse(JSON.parse(process.env.TILO_RECORDING_OPTIONS||"{}"));
 const dir=resolve("output",options.id);await mkdir(dir,{recursive:true});
@@ -12,14 +13,14 @@ const browser=await chromium.launch({headless:false});
 const context=await browser.newContext({viewport:{width:options.width,height:options.height},recordVideo:{dir,size:{width:options.width,height:options.height}}});
 const page=await context.newPage();
 const events:MotionEvent[]=[];
-let start=0,stopping=false;
-await context.exposeBinding("__tiloRecordEvent",(_source,ev:Omit<MotionEvent,"t">)=>{if(start&&Number.isFinite(ev.x)&&Number.isFinite(ev.y))events.push({...ev,t:(Date.now()-start)/1000})});
+let start=0,stopping=false,bridgeCount=0;
+await context.exposeBinding("__tiloRecordEvent",(_source,raw:unknown)=>{bridgeCount++;if(raw&&typeof raw==="object"&&(raw as {probe?:boolean}).probe)return;const ev=normalizeRecorderEvent(raw,{width:options.width,height:options.height});if(start&&ev)events.push({...ev,t:Math.max(0,(Date.now()-start)/1000)})});
 await context.addInitScript(()=>{
  const emit=(type:string,e:MouseEvent|WheelEvent)=>{void (window as unknown as {__tiloRecordEvent:(e:unknown)=>Promise<void>}).__tiloRecordEvent({type,x:e.clientX,y:e.clientY,...(e instanceof WheelEvent?{deltaY:e.deltaY}:{})})};
  let last=0;
  document.addEventListener("pointermove",e=>{const now=performance.now();if(now-last>=32){last=now;emit("move",e)}},{capture:true,passive:true});
  document.addEventListener("pointerdown",e=>emit("click",e),{capture:true,passive:true});
- document.addEventListener("click",e=>emit("click",e),{capture:true,passive:true});
+
  document.addEventListener("wheel",e=>emit("scroll",e),{capture:true,passive:true});
 });
 async function finish(){
@@ -30,6 +31,9 @@ async function finish(){
   await context.close();
   if(video)await copyFile(await video.path(),join(dir,"capture.webm"));
   await writeFile(join(dir,"events.json"),JSON.stringify(events,null,2));
+  const summary=recordingEventSummary(events);
+  await writeFile(join(dir,"event-diagnostics.json"),JSON.stringify({bridgeCount,summary,url:options.url},null,2));
+  console.log("RECORDING_EVENTS",JSON.stringify(summary));
   if(events.length===0)console.warn("RECORDING_WARNING: no pointer events captured. Check that interactions occurred in the Chromium recording window.");
   await writeFile(join(dir,"manifest.json"),JSON.stringify({scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url},null,2));
   const scenario=defineScenario({id:options.id,title:"Capture Tilo",viewport:{width:options.width,height:options.height},actions:[{type:"wait",ms:0}],video:{duration,fps:30,intro:"Découvrez Tilo",outro:"Apprendre autrement"}});
@@ -44,7 +48,7 @@ process.on("SIGINT",()=>{void finish()});
 process.on("SIGTERM",()=>{void finish()});
 browser.on("disconnected",()=>{if(!stopping){console.error("Browser closed before recording finalized");process.exitCode=1;process.exit()}});
 try{await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:20000});
- const bindingPresent=await page.evaluate(()=>typeof (window as unknown as {__tiloRecordEvent?:unknown}).__tiloRecordEvent==="function");
- if(!bindingPresent)console.warn("RECORDING_WARNING: event bridge is not available in the page");
+ const bindingPresent=await page.evaluate(async()=>{const w=window as unknown as {__tiloRecordEvent?:(event:unknown)=>Promise<void>};if(typeof w.__tiloRecordEvent!=="function")return false;await w.__tiloRecordEvent({probe:true});return true});
+ if(!bindingPresent||bridgeCount===0)throw Error("Event bridge self-test failed; capture would produce empty events.json");
  start=Date.now();console.log("RECORDING_READY",options.id)}
 catch(e){console.error("RECORDING_FAILED",e);await browser.close();process.exit(1)}
