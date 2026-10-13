@@ -1,6 +1,7 @@
 import {NextResponse} from "next/server";
 import {spawn,type ChildProcess} from "node:child_process";
-import {resolve} from "node:path";
+import {resolve,join} from "node:path";
+import {mkdir,writeFile} from "node:fs/promises";
 import {z} from "zod";
 const recordingOptions=z.object({url:z.string().url().refine(v=>{const u=new URL(v);return ["localhost","127.0.0.1"].includes(u.hostname)&&["http:","https:"].includes(u.protocol)}),id:z.string().regex(/^[a-z0-9-]+$/),width:z.number().int().min(640).max(3840).default(1440),height:z.number().int().min(360).max(2160).default(900)});
 export const runtime="nodejs";
@@ -15,7 +16,8 @@ export async function POST(req:Request){
  if(data?.action==="stop"){
   if(!child||state!=="recording")return NextResponse.json({error:"No active recording"},{status:409});
   state="stopping";
-  if(child.pid&&process.platform!=="win32")process.kill(-child.pid,"SIGINT");else child.kill("SIGINT");
+  const root=resolve(process.cwd(),"../..");
+  const dir=join(root,"output",id);await mkdir(dir,{recursive:true});await writeFile(join(dir,".stop"),"stop");
   return NextResponse.json({state,id});
  }
  if(data?.action!=="start")return NextResponse.json({error:"Invalid action"},{status:400});
