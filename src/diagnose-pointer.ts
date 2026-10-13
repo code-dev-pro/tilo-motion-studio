@@ -14,7 +14,7 @@ async function run(name:string,url?:string):Promise<Result>{
  try{
   if(url)await page.goto(url,{waitUntil:"domcontentloaded",timeout:20000});
   else await page.setContent('<!doctype html><html><body style="height:1200px"><button id="test" style="margin:150px">Test pointer</button></body></html>');
-  await page.evaluate((script)=>{(0,eval)(script)},recorderInitScript);
+  await page.addScriptTag({content:recorderInitScript});
   const stats=async()=>page.evaluate(()=>{const w=window as typeof window & {__tiloRecorderStats?:Stats};return w.__tiloRecorderStats??null});
   const beforeDom=events.length;
   await page.evaluate(()=>{
