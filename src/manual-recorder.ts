@@ -62,6 +62,7 @@ try{await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:20000});
  const bindingPresent=await page.evaluate(async()=>{const w=window as unknown as {__tiloRecordEvent?:(event:unknown)=>Promise<void>};if(typeof w.__tiloRecordEvent!=="function")return false;await w.__tiloRecordEvent({probe:true});return true});
  if(!bindingPresent||bridgeCount===0)throw Error("Event bridge self-test failed; capture would produce empty events.json");
  for(const frame of page.frames())await frame.evaluate(installRecorderListeners).catch(e=>console.warn("RECORDER_FRAME_INSTALL_FAILED",frame.url(),String(e)));
+ pageUrls.push(page.url());
  const before=bridgeCount;
  try{
   await page.mouse.move(Math.max(4,Math.floor(options.width/2)),Math.max(4,Math.floor(options.height/2)));
