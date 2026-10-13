@@ -5,6 +5,8 @@ import {interpolateTrack,smoothCursor} from "./cinematic-v2";
 import {fitInside} from "./layout";
 import type {EditorSettings} from "./editor";
 import {sourceTimeAt} from "./timeline";
+import {LightingOverlay} from "./lighting-overlay";
+import {defaultEnvironment} from "./environment";
 import {CursorOverlay} from "./cursor-overlay";
 import {defaultCursorSettings} from "./cursor-settings";
 export type Props={src:string;title:string;intro:string;outro:string;zoom:number;events?:MotionEvent[];camera?:CameraKeyframe[];viewport?:{width:number;height:number};settings?:EditorSettings;preview?:boolean};
@@ -14,7 +16,8 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const sourceTime=settings?.clips?.length?sourceTimeAt(settings.clips,t):t;
  const cam=interpolateTrack(camera,sourceTime??t),cursor=settings?.cursor===false?null:smoothCursor(events,sourceTime??t);
  const scene=settings?.scene;
- const bounds={width:width*.88,height:height*.76};
+ const environment=settings?.environment??defaultEnvironment();
+ const bounds={width:Math.max(1,width-environment.padding*2),height:Math.max(1,height-environment.padding*2)};
  const frame=scene?.fit==="cover"?{width:bounds.width,height:bounds.height}:fitInside(viewport,bounds);
  const fw=frame.width*(scene?.scale??1),fh=frame.height*(scene?.scale??1);
  const cx=cursor?cursor.x*fw/viewport.width:0,cy=cursor?cursor.y*fh/viewport.height:0;
@@ -29,10 +32,12 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  const clickSize=cursor?.click?48:0;
  return <AbsoluteFill style={{background:settings?.background??"radial-gradient(ellipse at 24% 18%,#324c8c 0%,#1a294b 38%,#0b1121 90%)",color:"white",fontFamily:"Arial,sans-serif",overflow:"hidden",alignItems:"center",justifyContent:"center"}}>
   <AbsoluteFill style={{background:"radial-gradient(circle at 75% 70%,#5365a52b,transparent 48%)",transform:`translate(${driftX}px,${driftY}px) scale(1.08)`}}/>
-  <div style={{position:"absolute",width:fw,height:fh,borderRadius:settings?.radius??24,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":"0 50px 130px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32",transform:`translate(${tx}px,${ty}px) scale(${totalScale}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
+  <div style={{position:"absolute",width:fw,height:fh,borderRadius:environment.radius,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":`0 ${25+environment.depth*70}px ${50+environment.depth*120}px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32`,transform:`translate(${tx}px,${ty}px) scale(${totalScale}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
    {settings?.clips?.length?settings.clips.map(clip=><Sequence key={clip.id} from={Math.round(clip.start*fps)} durationInFrames={Math.max(1,Math.round((clip.sourceOut-clip.sourceIn)*fps))} layout="none">{preview?<Video src={src} muted playsInline startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>}</Sequence>):(preview?<Video src={src} muted playsInline style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>)} 
    <CursorOverlay events={events} time={sourceTime??t} width={fw} height={fh} viewport={viewport} settings={{...(settings?.cursorSettings??defaultCursorSettings()),visible:settings?.cursor!==false&&(settings?.cursorSettings?.visible??true)}}/>
   </div>
+  <LightingOverlay settings={environment} width={width} height={height} time={t}/>
+  {environment.vignette>0&&<AbsoluteFill style={{pointerEvents:"none",background:`radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,${environment.vignette}) 100%)`}}/>}
   {(opening||closing)&&<AbsoluteFill style={{background:"linear-gradient(0deg,#071021e8,#07102190)",alignItems:"center",justifyContent:"center",textAlign:"center",padding:48,opacity:overlayOpacity}}>
    <div style={{fontSize:24,letterSpacing:8,marginBottom:20,opacity:.75}}>TILO</div>
    <div style={{fontSize:Math.min(64,width/14),fontWeight:750,letterSpacing:-1}}>{opening?(settings?.intro||intro||title):(settings?.outro||outro||"Découvrez Tilo")}</div>
