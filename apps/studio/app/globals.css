@@ -10,3 +10,17 @@
 .workspace .preview-player{width:100%;height:100%;min-height:0;min-width:0}
 .workspace .preview-player>div{max-width:100%;max-height:100%}
 @media(max-width:750px){.workspace{min-height:640px}.workspace .sidebar,.workspace .inspector{overflow:auto}}
+
+.timeline{position:relative}
+.timeline-resize-handle{position:absolute;z-index:20;top:-6px;left:0;right:0;height:12px;cursor:row-resize;touch-action:none;outline:none}
+.timeline-resize-handle:before{content:"";position:absolute;top:5px;left:0;right:0;height:2px;background:transparent;transition:background .15s}
+.timeline-resize-handle:hover:before,.timeline-resize-handle:focus-visible:before{background:#8da2ff}
+.topbar{background:linear-gradient(180deg,#161d2a,#101722);border-bottom-color:#354258}
+.topactions .btn.primary{box-shadow:0 4px 18px #647dfb29}
+.pane-header{background:#171f2d;color:#c9d7ef}
+.sidebar,.inspector{background:linear-gradient(180deg,#161e2b,#111824)}
+.preview-head{background:#121a27}
+.preview-area{background:radial-gradient(ellipse at 50% 35%,#263956 0%,#121b2a 48%,#0b111c 100%)}
+.btn{transition:background-color .14s,border-color .14s,box-shadow .14s}
+.btn:focus-visible,.tab:focus-visible,.recording-item:focus-visible{outline:2px solid #9fb3ff;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.btn,.timeline-resize-handle:before{transition:none}}
