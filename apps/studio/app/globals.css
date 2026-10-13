@@ -92,3 +92,5 @@ html,body{background:var(--background);color:var(--foreground)}
 .waveform-fallback{opacity:.65}
 .sidebar [role="combobox"]{width:100%;min-width:0}
 .sidebar [data-radix-select-trigger]{max-width:100%}
+
+.timeline-scroll{flex:1;min-height:0;scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent}.timeline-scroll .timeline-body{position:relative}.timeline-head .btn.active{border-color:var(--accent);color:var(--foreground)}
