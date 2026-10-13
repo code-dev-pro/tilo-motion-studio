@@ -1,12 +1,13 @@
 import "dotenv/config";
 import {chromium} from "playwright";
-import {mkdir,copyFile,writeFile} from "node:fs/promises";
+import {mkdir,copyFile,writeFile,access,rm} from "node:fs/promises";
 import {resolve,join} from "node:path";
 import {recordingOptions} from "./recording";
 import type {MotionEvent} from "./cinematic";
 import {defineScenario} from "./core";
 const options=recordingOptions.parse(JSON.parse(process.env.TILO_RECORDING_OPTIONS||"{}"));
 const dir=resolve("output",options.id);await mkdir(dir,{recursive:true});
+const stopFile=join(dir,".stop");await rm(stopFile,{force:true});
 const browser=await chromium.launch({headless:false});
 const context=await browser.newContext({viewport:{width:options.width,height:options.height},recordVideo:{dir,size:{width:options.width,height:options.height}}});
 const page=await context.newPage();
@@ -31,10 +32,12 @@ async function finish(){
   await writeFile(join(dir,"manifest.json"),JSON.stringify({scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url},null,2));
   const scenario=defineScenario({id:options.id,title:"Capture Tilo",viewport:{width:options.width,height:options.height},actions:[{type:"wait",ms:0}],video:{duration,fps:30,intro:"Découvrez Tilo",outro:"Apprendre autrement"}});
   await writeFile(join(dir,"scenario.json"),JSON.stringify(scenario,null,2));
+  await rm(stopFile,{force:true});
   console.log("RECORDING_SAVED",options.id,duration);
  }catch(e){console.error("RECORDING_FAILED",e);process.exitCode=1}
  finally{await browser.close();process.exit()}
 }
+const stopPoll=setInterval(()=>{void access(stopFile).then(()=>{clearInterval(stopPoll);void finish()}).catch(()=>{})},250);
 process.on("SIGINT",()=>{void finish()});
 process.on("SIGTERM",()=>{void finish()});
 browser.on("disconnected",()=>{if(!stopping){console.error("Browser closed before recording finalized");process.exitCode=1;process.exit()}});
