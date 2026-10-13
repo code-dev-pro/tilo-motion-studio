@@ -13,6 +13,7 @@
     "react-dom": "^19.1.2",
     "zod": "^4.1.12",
     "@remotion/player": "^4.0.535",
-    "remotion": "^4.0.535"
+    "remotion": "^4.0.535",
+    "lucide-react": "^0.468.0"
   }
 }
