@@ -7,10 +7,16 @@ import type {AudioTrack} from "../../../../src/audio-tracks";
 type Props={recording:string;duration:number;tracks:AudioTrack[];onChange:(tracks:AudioTrack[])=>void};
 export function AudioInspector({recording,duration,tracks,onChange}:Props){
  const input=useRef<HTMLInputElement>(null);
+ const microphone=useRef<MediaRecorder|null>(null);
+ const micStream=useRef<MediaStream|null>(null);
+ const chunks=useRef<Blob[]>([]);
+ const [recordingVoice,setRecordingVoice]=useState(false);
  const [kind,setKind]=useState<"ambience"|"voiceover">("ambience");
  const [busy,setBusy]=useState(false),[error,setError]=useState("");
  const patch=(id:string,next:Partial<AudioTrack>)=>onChange(tracks.map(t=>t.id===id?{...t,...next}:t));
- async function upload(file:File){
+ async function startVoice(){try{setError("");const stream=await navigator.mediaDevices.getUserMedia({audio:true});micStream.current=stream;chunks.current=[];const mime=MediaRecorder.isTypeSupported("audio/webm")?"audio/webm":"";const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);microphone.current=recorder;recorder.ondataavailable=e=>{if(e.data.size)chunks.current.push(e.data)};recorder.onstop=()=>{const file=new File(chunks.current,"commentaire.webm",{type:recorder.mimeType||"audio/webm"});stream.getTracks().forEach(t=>t.stop());micStream.current=null;setRecordingVoice(false);void upload(file,"voiceover")};recorder.start();setRecordingVoice(true)}catch(e){setError("Microphone inaccessible : "+String(e))}}
+ function stopVoice(){if(microphone.current?.state==="recording")microphone.current.stop()}
+ async function upload(file:File,overrideKind?:AudioTrack["kind"]){
   setBusy(true);setError("");
   try{
    if(!recording)throw Error("Sélectionne une capture avant d'ajouter un son.");
@@ -22,7 +28,7 @@ export function AudioInspector({recording,duration,tracks,onChange}:Props){
    const audio=new window.Audio(data.url);
    const measured=await new Promise<number>(resolve=>{audio.onloadedmetadata=()=>resolve(Number.isFinite(audio.duration)?audio.duration:duration);audio.onerror=()=>resolve(duration)});
    const id="track-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);
-   onChange([...tracks,{id,file:data.file,kind,name:file.name.slice(0,100),start:0,trimStart:0,duration:Math.max(.1,Math.min(measured,duration)),volume:kind==="ambience"?.3:1,muted:false,fadeIn:kind==="ambience"?.8:0,fadeOut:kind==="ambience"?.8:0,loop:kind==="ambience"}]);
+   onChange([...tracks,{id,file:data.file,kind:overrideKind??kind,name:file.name.slice(0,100),start:0,trimStart:0,duration:Math.max(.1,Math.min(measured,duration)),volume:(overrideKind??kind)==="ambience"?.3:1,muted:false,fadeIn:(overrideKind??kind)==="ambience"?.8:0,fadeOut:(overrideKind??kind)==="ambience"?.8:0,loop:(overrideKind??kind)==="ambience"}]);
   }catch(e){setError(String(e))}finally{setBusy(false);if(input.current)input.current.value=""}
  }
  return <section className="audio-inspector">
@@ -30,6 +36,7 @@ export function AudioInspector({recording,duration,tracks,onChange}:Props){
   <div className="tabbar"><button className={"tab "+(kind==="ambience"?"active":"")} onClick={()=>setKind("ambience")}>Ambiance</button><button className={"tab "+(kind==="voiceover"?"active":"")} onClick={()=>setKind("voiceover")}>Commentaire</button></div>
   <input ref={input} type="file" accept=".mp3,.wav,.m4a,.ogg,.webm,audio/*" hidden onChange={e=>{const f=e.target.files?.[0];if(f)void upload(f)}}/>
   <Button variant="secondary" disabled={busy||!recording} onClick={()=>input.current?.click()}>{busy?"Import…":kind==="ambience"?"Ajouter une ambiance":"Ajouter un commentaire audio"}</Button>
+  {kind==="voiceover"&&<Button variant={recordingVoice?"danger":"secondary"} disabled={busy||!recording} onClick={()=>recordingVoice?stopVoice():void startVoice()}>{recordingVoice?"■ Terminer le commentaire":"🎙 Enregistrer au microphone"}</Button>}
   <p className="hint">MP3, WAV, M4A, OGG ou WebM · 30 Mo maximum. Fichiers conservés dans le projet.</p>
   {error&&<p role="alert" style={{color:"var(--text-secondary)"}}>{error}</p>}
   {tracks.map(track=><div className="audio-track-editor" key={track.id}>
