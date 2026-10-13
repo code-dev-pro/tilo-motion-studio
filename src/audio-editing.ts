@@ -24,3 +24,13 @@ export function waveformPeaks(samples:Float32Array,bars=80):number[]{
   return Math.min(1,max);
  });
 }
+
+export function trimAudioEdge(track:AudioTrack,edge:"left"|"right",delta:number,movieDuration:number):AudioTrack{
+ const snap=(n:number)=>Math.round(n*30)/30;
+ if(edge==="left"){
+  const change=snap(Math.max(-Math.min(track.start,track.trimStart),Math.min(track.duration-.1,delta)));
+  return {...track,start:Math.max(0,track.start+change),trimStart:Math.max(0,track.trimStart+change),duration:Math.max(.1,track.duration-change)};
+ }
+ const next=Math.max(.1,Math.min(movieDuration-track.start,track.duration+snap(delta)));
+ return {...track,duration:next};
+}
