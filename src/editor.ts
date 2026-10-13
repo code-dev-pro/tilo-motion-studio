@@ -1,4 +1,5 @@
 import {z} from "zod";
+import {audioTracksSchema} from "./audio-tracks";
 import {backgroundSchema} from "./backgrounds";
 import {advancedCameraSchema} from "./advanced-camera";
 import {environmentSchema} from "./environment";
@@ -6,6 +7,7 @@ import {cursorSettingsSchema} from "./cursor-settings";
 import {clipSchema} from "./timeline";
 import {defaultScene} from "./scene";
 export const editorSchema=z.object({
+ audioTracks:audioTracksSchema.default([]),
  canvasBackground:backgroundSchema.default(backgroundSchema.parse({})),
  advancedCamera:advancedCameraSchema.default(advancedCameraSchema.parse({})),
  environment:environmentSchema.default(environmentSchema.parse({})),
