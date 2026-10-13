@@ -17,6 +17,7 @@ import {buildCameraTrack} from "../../../src/cinematic-v2";
 import type {CameraKeyframe,MotionEvent} from "../../../src/cinematic";
 import {arrange,splitClip,trimClip,moveClip,removeClip,duration as clipDuration,type Clip} from "../../../src/timeline";
 import {timelineTime} from "../../../src/scene";
+import {createHistory,commitHistory,undoHistory,redoHistory,snapTime,timelineTargets,type TimelineHistory} from "../../../src/timeline-pro";
 import type {SceneSettings} from "../../../src/scene";
 import type {EnvironmentSettings} from "../../../src/environment";
 import type {CursorSettings} from "../../../src/cursor-settings";
@@ -31,6 +32,9 @@ const dimensions={landscape:{width:1920,height:1080},portrait:{width:1080,height
 export default function Home(){
  const [url,setUrl]=useState("http://localhost:3000"),[captureId,setCaptureId]=useState("tilo-demo"),[resolution,setResolution]=useState("1600x900");
  const [status,setStatus]=useState<Status>({state:"idle"}),[recordings,setRecordings]=useState<Recording[]>([]),[selected,setSelected]=useState(""),[detail,setDetail]=useState<Detail|null>(null);
+ const history=useRef<TimelineHistory<Settings>>(createHistory(defaults));
+ const [canUndo,setCanUndo]=useState(false),[canRedo,setCanRedo]=useState(false);
+ const [snapEnabled,setSnapEnabled]=useState(true),[timelineZoom,setTimelineZoom]=useState(1);
  const [settings,setSettings]=useState<Settings>(defaults),[format,setFormat]=useState<keyof typeof dimensions>("landscape"),[playhead,setPlayhead]=useState(0),[playing,setPlaying]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState("Prêt");
  const [mediaError,setMediaError]=useState("");
  const [paneSizes,setPaneSizes]=useState([21,57,22]);
@@ -41,9 +45,11 @@ export default function Home(){
  const sourceDuration=Math.max(1,detail?.manifest.duration||detail?.scenario?.video?.duration||5);
  const duration=settings.clips.length?settings.clips.reduce((n,c)=>Math.max(n,c.start+clipDuration(c)),0):sourceDuration;
  const fps=30,dims=dimensions[format];
- const patch=(x:Partial<Settings>)=>setSettings(s=>({...s,...x}));
+ const patch=(x:Partial<Settings>)=>setSettings(s=>{const next={...s,...x};history.current=commitHistory(history.current,next);setCanUndo(history.current.past.length>0);setCanRedo(false);return next});
+ const undo=()=>{history.current=undoHistory(history.current);setSettings(history.current.present);setCanUndo(history.current.past.length>0);setCanRedo(history.current.future.length>0)};
+ const redo=()=>{history.current=redoHistory(history.current);setSettings(history.current.present);setCanUndo(history.current.past.length>0);setCanRedo(history.current.future.length>0)};
  async function refresh(){const r=await fetch("/api/recordings");if(r.ok)setRecordings((await r.json()).recordings||[])}
- async function load(id:string){const r=await fetch("/api/recordings/"+id);if(!r.ok){setMessage("Capture introuvable");return}const d=await r.json() as Detail;setSelected(id);setDetail(d);setMediaError("");setSettings({...defaults,...d.settings,cursorSettings:d.settings.cursorSettings||defaults.cursorSettings,environment:d.settings.environment||defaults.environment,advancedCamera:d.settings.advancedCamera||defaults.advancedCamera,canvasBackground:d.settings.canvasBackground||defaults.canvasBackground,audioTracks:d.settings.audioTracks||[],audioMixer:d.settings.audioMixer||defaults.audioMixer,clips:d.settings.clips||[],scene:d.settings.scene||defaults.scene});setSelectedKey(null);setPlayhead(0)}
+ async function load(id:string){const r=await fetch("/api/recordings/"+id);if(!r.ok){setMessage("Capture introuvable");return}const d=await r.json() as Detail;setSelected(id);setDetail(d);setMediaError("");setSettings({...defaults,...d.settings,cursorSettings:d.settings.cursorSettings||defaults.cursorSettings,environment:d.settings.environment||defaults.environment,advancedCamera:d.settings.advancedCamera||defaults.advancedCamera,canvasBackground:d.settings.canvasBackground||defaults.canvasBackground,audioTracks:d.settings.audioTracks||[],audioMixer:d.settings.audioMixer||defaults.audioMixer,clips:d.settings.clips||[],scene:d.settings.scene||defaults.scene});history.current=createHistory({...defaults,...d.settings});setCanUndo(false);setCanRedo(false);setSelectedKey(null);setPlayhead(0)}
  useEffect(()=>{void refresh();const timer=setInterval(()=>{void fetch("/api/record").then(r=>r.json()).then((s:Status)=>{setStatus(s);if(s.state==="ready"&&!readySeen.current){readySeen.current=true;void refresh();if(s.id)void load(s.id)}if(s.state!=="ready")readySeen.current=false}).catch(()=>{})},1500);return()=>clearInterval(timer)},[]);
  useEffect(()=>{const ref=player.current;if(!ref)return;const frame=(e:{detail:{frame:number}})=>setPlayhead(e.detail.frame/fps);const play=()=>setPlaying(true),pause=()=>setPlaying(false);ref.addEventListener("frameupdate",frame);ref.addEventListener("play",play);ref.addEventListener("pause",pause);return()=>{ref.removeEventListener("frameupdate",frame);ref.removeEventListener("play",play);ref.removeEventListener("pause",pause)}},[detail,format]);
  const camera=useMemo(()=>detail?(settings.camera.length?settings.camera:settings.advancedCamera.mode==="manual"?[]:settings.autoZoom?buildCameraTrack(detail.events,duration,detail.manifest.viewport,{zoom:settings.advancedCamera.amount,maxZoom:3}):[]):[],[detail,settings.camera,settings.autoZoom,settings.advancedCamera,duration]);
