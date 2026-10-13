@@ -4,7 +4,7 @@ import {resolve} from "node:path";
 import {z} from "zod";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
-const schema=z.object({scenario:z.enum(["fixture","moon-phases"]),format:z.enum(["landscape","portrait","square"])});
+const schema=z.object({scenario:z.enum(["fixture","moon-phases"]).optional(),recording:z.string().regex(/^[a-z0-9-]+$/).optional(),format:z.enum(["landscape","portrait","square"])}).refine(v=>Boolean(v.scenario||v.recording));
 let running=false;
 export async function POST(request:Request){
  const host=request.headers.get("host")||"";
@@ -16,14 +16,14 @@ export async function POST(request:Request){
  if(running)return NextResponse.json({error:"A render is already running"},{status:409});
  running=true;
  try{
-  const {scenario,format}=parsed.data;
+  const {scenario,recording,format}=parsed.data;
   const root=resolve(process.cwd(),"../..");
   const output=await new Promise<string>((ok,fail)=>{
-   const child=spawn("pnpm",["video:render","--scenario",scenario,"--format",format],{cwd:root,env:process.env,stdio:["ignore","pipe","pipe"]});
+   const child=spawn("pnpm",["render",...(recording?["--recording",recording]:["--scenario",scenario||"fixture"]),"--format",format],{cwd:root,env:process.env,stdio:["ignore","pipe","pipe"]});
    let stderr="";
    child.stderr.on("data",(chunk:Buffer)=>{stderr=(stderr+chunk.toString()).slice(-3000)});
    child.on("error",fail);
-   child.on("close",code=>code===0?ok(`output/${scenario}/${format}.mp4`):fail(Error(stderr||`Exit code ${code}`)));
+   child.on("close",code=>code===0?ok(`output/${recording||scenario}/${format}.mp4`):fail(Error(stderr||`Exit code ${code}`)));
   });
   return NextResponse.json({output});
  }catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Render failed"},{status:500})}
