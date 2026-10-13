@@ -11,10 +11,10 @@ export async function startMediaServer(rootDirectory:string):Promise<{baseUrl:st
    const filename=resolve(root,"."+decodeURIComponent(pathname));
    const relativePath=relative(root,filename);
    if(relativePath===".."||relativePath.startsWith(".."+sep)||relativePath.startsWith("/")){res.writeHead(403);res.end();return}
-   if(!/\.(webm|mp4|mp3|wav)$/i.test(filename)){res.writeHead(403);res.end();return}
+   if(!/\.(webm|mp4|mp3|wav|m4a|ogg)$/i.test(filename)){res.writeHead(403);res.end();return}
    const file=await stat(filename);
    if(!file.isFile())throw Error("Not a file");
-   const contentType=filename.endsWith(".webm")?"video/webm":filename.endsWith(".mp4")?"video/mp4":filename.endsWith(".mp3")?"audio/mpeg":"audio/wav";
+   const contentType=filename.endsWith(".mp3")?"audio/mpeg":filename.endsWith(".wav")?"audio/wav":filename.endsWith(".m4a")?"audio/mp4":filename.endsWith(".ogg")?"audio/ogg":filename.includes("/audio-")&&filename.endsWith(".webm")?"audio/webm":filename.endsWith(".webm")?"video/webm":"video/mp4";
    const range=req.headers.range;
    if(range){
     const m=/^bytes=(\d+)-(\d*)$/.exec(range);
