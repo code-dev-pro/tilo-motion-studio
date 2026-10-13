@@ -3,7 +3,7 @@ import {cursorSettingsSchema} from "./cursor-settings";
 import {clipSchema} from "./timeline";
 import {defaultScene} from "./scene";
 export const editorSchema=z.object({
- cursorSettings:cursorSettingsSchema.default({}),
+ cursorSettings:cursorSettingsSchema.default(cursorSettingsSchema.parse({})),
  intro:z.string().max(160).default("Découvrez Tilo"),
  outro:z.string().max(160).default("Apprendre autrement"),
  zoom:z.number().min(1).max(1.7).default(1.06),
