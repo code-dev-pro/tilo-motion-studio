@@ -30,7 +30,7 @@ export function movePropertyKeyframe(tracks:AnimationTrack[],property:AnimatedPr
  return tracks.map(track=>{
   if(track.property!==property||index<0||index>=track.keyframes.length)return track;
   const next=track.keyframes.map((k,i)=>i===index?{...k,t:Math.max(0,Math.round(time*30)/30)}:k);
-  return {...track,keyframes:next.sort((a,b)=>a.t-b.t)};
+  return {...track,keyframes:next};
  });
 }
 export function setPropertyEasing(tracks:AnimationTrack[],property:AnimatedProperty,index:number,easing:z.infer<typeof propertyKeyframeSchema>["easing"]):AnimationTrack[]{
