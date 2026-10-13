@@ -4,22 +4,31 @@ export const defaultCameraOptions:CameraOptions={zoom:1.48,lead:.32,hold:1.15,re
 export function easeCinematic(t:number){const x=Math.max(0,Math.min(1,t));return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2}
 export function buildCameraTrack(events:MotionEvent[],duration:number,viewport:{width:number;height:number},overrides:Partial<CameraOptions>={}):CameraKeyframe[]{
  const o={...defaultCameraOptions,...overrides},end=Math.max(0,duration);
- const clicks=events.filter(e=>e.type==="click"&&Number.isFinite(e.t)&&e.t>=0&&e.t<=end).sort((a,b)=>a.t-b.t);
+ const clicks=events.filter(e=>e.type==="click"&&Number.isFinite(e.t)&&e.t>=0&&e.t<=end&&Number.isFinite(e.x)&&Number.isFinite(e.y)).sort((a,b)=>a.t-b.t);
  const selected:MotionEvent[]=[];
  for(const c of clicks){if(selected.length&&c.t-selected[selected.length-1].t<o.minGap)continue;selected.push(c)}
- const keys:CameraKeyframe[]=[{t:0,x:.5,y:.5,scale:1}];
+ const home=(t:number):CameraKeyframe=>({t,x:.5,y:.5,scale:1});
+ const keys:CameraKeyframe[]=[home(0)];
  let lastEnd=0;
  for(const c of selected){
-  const begin=Math.max(lastEnd,c.t-o.lead),arrive=Math.max(begin+.01,c.t+.32);
-  const holdEnd=Math.min(end,arrive+o.hold),releaseEnd=Math.min(end,holdEnd+o.release);
+  const begin=Math.max(lastEnd,c.t-o.lead);
+  const arrive=Math.max(begin+.01,c.t+.32);
   if(arrive>=end)break;
+  const holdEnd=Math.min(end,arrive+o.hold);
+  const releaseEnd=Math.min(end,holdEnd+o.release);
   const scale=Math.max(1,Math.min(o.maxZoom,o.zoom));
-  const x=Math.max(.12,Math.min(.88,c.x/viewport.width)),y=Math.max(.12,Math.min(.88,c.y/viewport.height));
-  keys.push({t:begin,x:.5,y:.5,scale:1},{t:arrive,x,y,scale},{t:holdEnd,x,y,scale},{t:releaseEnd,x:.5,y:.5,scale:1});
+  const x=Math.max(.12,Math.min(.88,c.x/Math.max(1,viewport.width)));
+  const y=Math.max(.12,Math.min(.88,c.y/Math.max(1,viewport.height)));
+  // Never add duplicate-time keyframes; a hold at the exact end would overwrite the release.
+  const candidates=[home(begin),{t:arrive,x,y,scale},{t:holdEnd,x,y,scale},home(releaseEnd)];
+  for(const key of candidates){
+   if(key.t>keys[keys.length-1].t+1e-5)keys.push(key);
+   else if(Math.abs(key.t-keys[keys.length-1].t)<1e-5)keys[keys.length-1]=key;
+  }
   lastEnd=releaseEnd;
  }
- keys.push({t:end,x:.5,y:.5,scale:1});
- return keys.sort((a,b)=>a.t-b.t);
+ if(end>keys[keys.length-1].t+1e-5)keys.push(home(end));
+ return keys;
 }
 export function interpolateTrack(keys:CameraKeyframe[],t:number):CameraKeyframe{
  if(!keys.length)return {t,x:.5,y:.5,scale:1};

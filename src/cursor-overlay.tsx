@@ -1,15 +1,14 @@
 import React from "react";
 import type {CursorSettings} from "./cursor-settings";
 import type {MotionEvent} from "./cinematic";
-import {smoothCursor} from "./cinematic-v2";
+import {cursorPosition,cursorMotionPresets} from "./cursor-motion";
 export function cursorAt(events:MotionEvent[],time:number,mode:CursorSettings["movement"]){
- const lag={precise:0,subtle:.025,smooth:.055,fluid:.09}[mode];
- return smoothCursor(events,Math.max(0,time-lag),{precise:.001,subtle:.035,smooth:.08,fluid:.14}[mode]);
+ return cursorPosition(events,time,cursorMotionPresets[mode]);
 }
 export function CursorOverlay({events,time,width,height,viewport,settings}:{events:MotionEvent[];time:number;width:number;height:number;viewport:{width:number;height:number};settings:CursorSettings}){
  if(!settings.visible)return null;
  const p=cursorAt(events,time,settings.movement);if(!p)return null;
- const last=events.filter(e=>e.type==="move"||e.type==="click"||e.type==="drag").reduce((v,e)=>e.t<=time?Math.max(v,e.t):v,-Infinity);
+ const last=p.lastEventTime;
  const idle=settings.hideWhenIdle&&time-last>1.2;
  if(idle)return null;
  const size=28*settings.size;
