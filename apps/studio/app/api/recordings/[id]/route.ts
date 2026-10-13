@@ -5,14 +5,15 @@ import {z} from "zod";
 export const runtime="nodejs";
 const sceneSchema=z.object({fit:z.enum(["contain","cover"]),scale:z.number().min(.5).max(1.5),offsetX:z.number().min(-1).max(1),offsetY:z.number().min(-1).max(1)});
 const clipSchema=z.object({id:z.string().regex(/^[a-z0-9-]+$/),start:z.number().nonnegative(),sourceIn:z.number().nonnegative(),sourceOut:z.number().positive()}).refine(c=>c.sourceOut>c.sourceIn);
-const settingsSchema=z.object({
+const cursorSettingsSchema=z.object({visible:z.boolean(),hideWhenIdle:z.boolean(),style:z.enum(["default","white","hand","circle","modern","retro"]),size:z.number().min(.5).max(3),clickEffect:z.enum(["none","ripple","pulse","confetti"]),movement:z.enum(["precise","subtle","smooth","fluid"])});
+const settingsSchema=z.object({cursorSettings:cursorSettingsSchema.default({visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"}),
  clips:z.array(clipSchema).default([]),
  scene:sceneSchema.default({fit:"contain",scale:1,offsetX:0,offsetY:0}),
  intro:z.string().max(160),outro:z.string().max(160),zoom:z.number().min(1).max(1.7),autoZoom:z.boolean(),cursor:z.boolean(),
  background:z.string().regex(/^#[0-9a-fA-F]{6}$/),radius:z.number().int().min(0).max(48),shadow:z.boolean(),
  camera:z.array(z.object({t:z.number().nonnegative(),x:z.number().min(0).max(1),y:z.number().min(0).max(1),scale:z.number().min(1).max(2)}))
 });
-const defaults={clips:[],scene:{fit:"contain",scale:1,offsetX:0,offsetY:0},intro:"Découvrez Tilo",outro:"Apprendre autrement",zoom:1.06,autoZoom:true,cursor:true,background:"#101827",radius:24,shadow:true,camera:[]};
+const defaults={cursorSettings:{visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"},clips:[],scene:{fit:"contain",scale:1,offsetX:0,offsetY:0},intro:"Découvrez Tilo",outro:"Apprendre autrement",zoom:1.06,autoZoom:true,cursor:true,background:"#101827",radius:24,shadow:true,camera:[]};
 function permitted(req:Request){const host=req.headers.get("host")||"",origin=req.headers.get("origin");return /^(localhost|127\.0\.0\.1):3333$/.test(host)&&(!origin||new URL(origin).host===host)}
 export async function GET(req:Request,{params}:{params:Promise<{id:string}>}){
  if(!permitted(req))return NextResponse.json({error:"Local only"},{status:403});
