@@ -7,12 +7,15 @@ import type {MotionEvent} from "./cinematic";
 import {buildCameraTrack} from "./cinematic-v2";
 import {startMediaServer} from "./media";
 import {editorSchema} from "./editor";
+import {validateClips,duration as clipDuration} from "./timeline";
 
 export async function render(s:Scenario,format:Format){
  const root=resolve("output"),dir=join(root,s.id),source=join(dir,"capture.webm");
  await access(source);
  const events:MotionEvent[]=JSON.parse(await readFile(join(dir,"events.json"),"utf8").catch(()=>"[]"));
  const settings=editorSchema.parse(JSON.parse(await readFile(join(dir,"editor.json"),"utf8").catch(()=>"{}")));
+ const clips=validateClips(settings.clips,s.video.duration);
+ const editedDuration=clips.length?clips.reduce((n,c)=>Math.max(n,c.start+clipDuration(c)),0):s.video.duration;
  const media=await startMediaServer(root);
  try{
   const serveUrl=await bundle({entryPoint:resolve("src/remotion-entry.tsx")});
@@ -23,7 +26,7 @@ export async function render(s:Scenario,format:Format){
   };
   const composition=await selectComposition({serveUrl,id:"TiloPromo",inputProps:props});
   const dest=join(dir,format+".mp4");
-  await renderMedia({serveUrl,composition:{...composition,...sizes[format],fps:s.video.fps,durationInFrames:Math.ceil(s.video.duration*s.video.fps)},codec:"h264",outputLocation:dest,inputProps:props});
+  await renderMedia({serveUrl,composition:{...composition,...sizes[format],fps:s.video.fps,durationInFrames:Math.ceil(editedDuration*s.video.fps)},codec:"h264",outputLocation:dest,inputProps:props});
   return dest;
  }finally{await media.close()}
 }
