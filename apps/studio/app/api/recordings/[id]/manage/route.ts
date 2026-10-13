@@ -2,11 +2,12 @@ import {NextResponse} from "next/server";
 import {cp,mkdir,readdir,readFile,rename,rm,stat,writeFile} from "node:fs/promises";
 import {resolve,join} from "node:path";
 import {randomUUID} from "node:crypto";
+import {validProjectId} from "../../../../../../../src/project-management";
 export const runtime="nodejs";
-const idPattern=/^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 const root=resolve(process.cwd(),"../../output");
 function permitted(req:Request){const host=req.headers.get("host")||"",origin=req.headers.get("origin");return /^(localhost|127\.0\.0\.1):3333$/.test(host)&&(!origin||new URL(origin).host===host)}
-const valid=(id:string)=>id.length<=80&&idPattern.test(id);
+const valid=validProjectId;
 async function exists(id:string){try{return (await stat(join(root,id))).isDirectory()}catch{return false}}
 async function sourceReady(id:string){try{const manifest=JSON.parse(await readFile(join(root,id,"manifest.json"),"utf8"));return typeof manifest==="object"&&manifest!==null}catch{return false}}
 export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){
