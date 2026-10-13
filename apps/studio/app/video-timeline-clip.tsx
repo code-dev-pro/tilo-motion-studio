@@ -3,12 +3,13 @@ import {useRef} from "react";
 import type {MouseEvent as ReactMouseEvent,PointerEvent as ReactPointerEvent} from "react";
 import type {Clip} from "../../../src/timeline";
 import {trimClip,duration as clipDuration} from "../../../src/timeline";
+import {pointerDeltaSeconds} from "../../../src/trim-geometry";
 type Props={clip:Clip;clips:Clip[];index:number;duration:number;sourceDuration:number;selected:boolean;onChange:(clips:Clip[])=>void;onSelect:(event:ReactMouseEvent<HTMLButtonElement>)=>void;onDropClip:(from:number,to:number)=>void};
 export function VideoTimelineClip({clip,clips,index,duration,sourceDuration,selected,onChange,onSelect,onDropClip}:Props){
  const gesture=useRef<{startX:number;edge:"left"|"right";initial:Clip[];trackWidth:number}|null>(null);
  function update(e:ReactPointerEvent<HTMLDivElement>){
   const g=gesture.current;if(!g)return;
-  const delta=(e.clientX-g.startX)/g.trackWidth*duration;
+  const delta=pointerDeltaSeconds(e.clientX-g.startX,g.trackWidth,duration);
   onChange(trimClip(g.initial,clip.id,g.edge,delta,sourceDuration));
  }
  return <div className={"clip video-timeline-clip "+(selected?"selected":"")} style={{left:clip.start/duration*100+"%",width:clipDuration(clip)/duration*100+"%",right:"auto"}}>
