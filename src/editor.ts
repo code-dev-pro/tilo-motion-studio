@@ -1,4 +1,5 @@
 import {z} from "zod";
+import {animationTracksSchema} from "./property-animation";
 import {audioTracksSchema} from "./audio-tracks";
 import {audioMixerSchema} from "./audio-mixer";
 import {backgroundSchema} from "./backgrounds";
@@ -8,6 +9,7 @@ import {cursorSettingsSchema} from "./cursor-settings";
 import {clipSchema} from "./timeline";
 import {defaultScene} from "./scene";
 export const editorSchema=z.object({
+ animationTracks:animationTracksSchema,
  audioTracks:audioTracksSchema.default([]),
  audioMixer:audioMixerSchema.default(audioMixerSchema.parse({})),
  canvasBackground:backgroundSchema.default(backgroundSchema.parse({})),

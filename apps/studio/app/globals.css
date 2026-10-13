@@ -94,3 +94,12 @@ html,body{background:var(--background);color:var(--foreground)}
 .sidebar [data-radix-select-trigger]{max-width:100%}
 
 .timeline-scroll{flex:1;min-height:0;scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent}.timeline-scroll .timeline-body{position:relative}.timeline-head .btn.active{border-color:var(--accent);color:var(--foreground)}
+
+.animation-inspector{display:flex;flex-direction:column;gap:12px}
+.animation-property-row{display:grid;grid-template-columns:minmax(0,1fr) 36px;align-items:center;gap:8px}
+.property-diamond.active{color:var(--accent)}
+.tilo-tooltip{z-index:1000;padding:7px 10px;border-radius:8px;background:var(--surface-raised);color:var(--foreground);border:1px solid var(--border);font-size:12px;box-shadow:0 8px 24px #0005;animation:tilo-tip-in .12s ease-out}
+.tilo-tooltip-arrow{fill:var(--surface-raised)}
+@keyframes tilo-tip-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+
+.video-timeline-clip{display:flex;align-items:center;justify-content:center;overflow:visible}.video-clip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}.video-trim-handle{position:absolute;top:0;bottom:0;width:9px;background:var(--foreground);opacity:.65;cursor:ew-resize;touch-action:none}.video-trim-handle.left{left:0;border-radius:4px 0 0 4px}.video-trim-handle.right{right:0;border-radius:0 4px 4px 0}.video-timeline-clip.selected .video-trim-handle,.video-timeline-clip:hover .video-trim-handle{opacity:1}
