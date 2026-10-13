@@ -6,18 +6,20 @@ import {sizes,type Format,type Scenario} from "./core";
 import type {MotionEvent} from "./cinematic";
 import {buildCameraTrack} from "./cinematic-v2";
 import {startMediaServer} from "./media";
+import {editorSchema} from "./editor";
 
 export async function render(s:Scenario,format:Format){
  const root=resolve("output"),dir=join(root,s.id),source=join(dir,"capture.webm");
  await access(source);
  const events:MotionEvent[]=JSON.parse(await readFile(join(dir,"events.json"),"utf8").catch(()=>"[]"));
+ const settings=editorSchema.parse(JSON.parse(await readFile(join(dir,"editor.json"),"utf8").catch(()=>"{}")));
  const media=await startMediaServer(root);
  try{
   const serveUrl=await bundle({entryPoint:resolve("src/remotion-entry.tsx")});
   const props={
    src:`${media.baseUrl}/${encodeURIComponent(s.id)}/capture.webm`,
    title:s.title,intro:s.video.intro,outro:s.video.outro,zoom:s.video.zoom,
-   events,camera:buildCameraTrack(events,s.video.duration,s.viewport),viewport:s.viewport
+   events,camera:settings.camera.length?settings.camera:settings.autoZoom?buildCameraTrack(events,s.video.duration,s.viewport):[],viewport:s.viewport,settings
   };
   const composition=await selectComposition({serveUrl,id:"TiloPromo",inputProps:props});
   const dest=join(dir,format+".mp4");
