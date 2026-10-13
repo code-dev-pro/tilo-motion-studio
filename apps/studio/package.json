@@ -15,6 +15,9 @@
     "@remotion/player": "^4.0.535",
     "remotion": "^4.0.535",
     "lucide-react": "^0.468.0",
-    "motion": "^12.23.0"
+    "motion": "^12.23.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-switch": "^1.1.0",
+    "@radix-ui/react-select": "^1.1.0"
   }
 }
