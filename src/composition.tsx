@@ -1,14 +1,16 @@
 import React from "react";
-import {AbsoluteFill,OffthreadVideo,Video,interpolate,useCurrentFrame,useVideoConfig} from "remotion";
+import {AbsoluteFill,OffthreadVideo,Video,Sequence,interpolate,useCurrentFrame,useVideoConfig} from "remotion";
 import type {CameraKeyframe,MotionEvent} from "./cinematic";
 import {interpolateTrack,smoothCursor} from "./cinematic-v2";
 import {fitInside} from "./layout";
 import type {EditorSettings} from "./editor";
+import {sourceTimeAt} from "./timeline";
 export type Props={src:string;title:string;intro:string;outro:string;zoom:number;events?:MotionEvent[];camera?:CameraKeyframe[];viewport?:{width:number;height:number};settings?:EditorSettings;preview?:boolean};
 export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={width:1920,height:1080},settings,preview=false}:Props){
  const f=useCurrentFrame(),{fps,durationInFrames,width,height}=useVideoConfig();
  const t=f/fps,duration=durationInFrames/fps;
- const cam=interpolateTrack(camera,t),cursor=settings?.cursor===false?null:smoothCursor(events,t);
+ const sourceTime=settings?.clips?.length?sourceTimeAt(settings.clips,t):t;
+ const cam=interpolateTrack(camera,sourceTime??t),cursor=settings?.cursor===false?null:smoothCursor(events,sourceTime??t);
  const scene=settings?.scene;
  const bounds={width:width*.88,height:height*.76};
  const frame=scene?.fit==="cover"?{width:bounds.width,height:bounds.height}:fitInside(viewport,bounds);
@@ -26,7 +28,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
  return <AbsoluteFill style={{background:settings?.background??"radial-gradient(ellipse at 24% 18%,#324c8c 0%,#1a294b 38%,#0b1121 90%)",color:"white",fontFamily:"Arial,sans-serif",overflow:"hidden",alignItems:"center",justifyContent:"center"}}>
   <AbsoluteFill style={{background:"radial-gradient(circle at 75% 70%,#5365a52b,transparent 48%)",transform:`translate(${driftX}px,${driftY}px) scale(1.08)`}}/>
   <div style={{position:"absolute",width:fw,height:fh,borderRadius:settings?.radius??24,overflow:"hidden",background:"#111827",boxShadow:settings?.shadow===false?"none":"0 50px 130px #0009,0 16px 40px #0008,0 0 0 1px #ffffff32",transform:`translate(${tx}px,${ty}px) scale(${totalScale}) translateY(${(1-enter)*25+(1-exit)*-15}px)`,willChange:"transform"}}>
-   {preview?<Video src={src} muted playsInline style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:"contain"}}/>}
+   {settings?.clips?.length?settings.clips.map(clip=><Sequence key={clip.id} from={Math.round(clip.start*fps)} durationInFrames={Math.max(1,Math.round((clip.sourceOut-clip.sourceIn)*fps))} layout="none">{preview?<Video src={src} muted playsInline startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>}</Sequence>):(preview?<Video src={src} muted playsInline style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>)} 
    {cursor&&<div style={{position:"absolute",left:cx,top:cy,transform:"translate(-3px,-2px)",pointerEvents:"none",filter:"drop-shadow(0 2px 2px #0008)"}}>
     {cursor.click&&<div style={{position:"absolute",width:clickSize,height:clickSize,left:-clickSize/2,top:-clickSize/2,border:"2px solid #a3b6ff",borderRadius:"50%",background:"#a3b6ff22"}}/>}
     <svg width="30" height="38" viewBox="0 0 32 40"><path d="M3 2 L3 31 L10 24 L16 37 L22 34 L16 21 L27 21 Z" fill="white" stroke="#111827" strokeWidth="2.4" strokeLinejoin="round"/></svg>
