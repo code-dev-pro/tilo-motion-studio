@@ -3,7 +3,7 @@ import {chromium} from "playwright";
 import {mkdir,copyFile,writeFile,access,rm} from "node:fs/promises";
 import {resolve,join} from "node:path";
 import {recordingOptions} from "./recording";
-import {installRecorderListeners} from "./recorder-listeners";
+import {recorderInitScript} from "./recorder-init-script";
 import type {MotionEvent} from "./cinematic";
 import {normalizeRecorderEvent,recordingEventSummary} from "./recorder-events";
 import {defineScenario} from "./core";
@@ -28,7 +28,7 @@ await context.exposeBinding("__tiloRecordEvent",async(source,raw:unknown)=>{
  }
  events.push({...ev,x:Math.max(0,Math.min(options.width,ev.x)),y:Math.max(0,Math.min(options.height,ev.y)),t:Math.max(0,(Date.now()-start)/1000)});
 });
-await context.addInitScript(installRecorderListeners);
+await context.addInitScript({content:recorderInitScript});
 async function collectFrameStats(){return Promise.all(page.frames().map(async frame=>({url:frame.url(),stats:await frame.evaluate(()=>({installed:!!(window as typeof window & {__tiloRecorderActive?:boolean}).__tiloRecorderActive,counts:(window as typeof window & {__tiloRecorderStats?:Record<string,number>}).__tiloRecorderStats??null})).catch(()=>null)})))}
 let frameStats:Awaited<ReturnType<typeof collectFrameStats>>=[];
 let syntheticProbe:{bridgeDelta:number;stats:Awaited<ReturnType<typeof collectFrameStats>>;error?:string}|null=null;
@@ -62,7 +62,7 @@ browser.on("disconnected",()=>{if(!stopping){console.error("Browser closed befor
 try{await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:20000});
  const bindingPresent=await page.evaluate(async()=>{const w=window as unknown as {__tiloRecordEvent?:(event:unknown)=>Promise<void>};if(typeof w.__tiloRecordEvent!=="function")return false;await w.__tiloRecordEvent({probe:true});return true});
  if(!bindingPresent||bridgeCount===0)throw Error("Event bridge self-test failed; capture would produce empty events.json");
- for(const frame of page.frames())await frame.evaluate(installRecorderListeners).catch(e=>console.warn("RECORDER_FRAME_INSTALL_FAILED",frame.url(),String(e)));
+ for(const frame of page.frames())await frame.addScriptTag({content:recorderInitScript}).catch(e=>console.warn("RECORDER_FRAME_INSTALL_FAILED",frame.url(),String(e)));
  console.log("RECORDER_LISTENERS_REBOUND",JSON.stringify(await collectFrameStats()));
  pageUrls.push(page.url());
  const before=bridgeCount;

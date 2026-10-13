@@ -1,5 +1,5 @@
 import {chromium} from "playwright";
-import {installRecorderListeners} from "./recorder-listeners";
+import {recorderInitScript} from "./recorder-init-script";
 type Stats={pointermove:number;mousemove:number;pointerdown:number;mousedown:number;wheel:number;delivered:number;failed:number};
 type Result={name:string;url:string;bridgeCount:number;events:unknown[];stats:Stats|null;domProbe:{before:number;after:number};mouseProbe:{before:number;after:number};errors:string[]};
 async function run(name:string,url?:string):Promise<Result>{
@@ -7,14 +7,14 @@ async function run(name:string,url?:string):Promise<Result>{
  const context=await browser.newContext({viewport:{width:1000,height:700}});
  const events:unknown[]=[];const errors:string[]=[];
  await context.exposeBinding("__tiloRecordEvent",(_source,ev:unknown)=>{events.push(ev)});
- await context.addInitScript(installRecorderListeners);
+ await context.addInitScript({content:recorderInitScript});
  const page=await context.newPage();
  page.on("pageerror",e=>errors.push("pageerror: "+e.message));
  page.on("console",m=>{if(m.type()==="error")errors.push("console: "+m.text())});
  try{
   if(url)await page.goto(url,{waitUntil:"domcontentloaded",timeout:20000});
   else await page.setContent('<!doctype html><html><body style="height:1200px"><button id="test" style="margin:150px">Test pointer</button></body></html>');
-  await page.evaluate(installRecorderListeners);
+  await page.addScriptTag({content:recorderInitScript});
   const stats=async()=>page.evaluate(()=>{const w=window as typeof window & {__tiloRecorderStats?:Stats};return w.__tiloRecorderStats??null});
   const beforeDom=events.length;
   await page.evaluate(()=>{
