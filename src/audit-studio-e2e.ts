@@ -32,7 +32,7 @@ async function main(){
  ]);
  const captureBrowser=await chromium.launch({headless:true});
  try{const context=await captureBrowser.newContext({viewport:{width:640,height:360},recordVideo:{dir:dirs[0],size:{width:640,height:360}}});const page=await context.newPage();await page.setContent("<html><body style=\"background:#222;color:white\"><h1>Audit video</h1></body></html>");await sleep(3000);const video=page.video();await context.close();assert(video,"Fixture recording did not start");await copyFile(await video.path(),join(dirs[0],"capture.webm"))}finally{await captureBrowser.close()}
- server=spawn("pnpm",["--filter","@tilo/studio","start"],{cwd:root,stdio:"pipe",env:{...process.env,NODE_ENV:"production"}});
+ server=spawn("pnpm",["--filter","@tilo/studio","start"],{cwd:root,stdio:"pipe",env:{...process.env,NODE_ENV:"production"},detached:process.platform!=="win32"});
  let stderr="";server.stderr?.on("data",chunk=>{stderr=(stderr+chunk.toString()).slice(-2000)});
  await waitForServer();
  const get=async(path:string)=>fetch(base+path);
@@ -81,6 +81,6 @@ async function main(){
  console.log("E2E API: list, detail, duplicate, protected delete, original preservation — PASS");
 }
 main().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{
- if(server){server.kill("SIGTERM");await sleep(300)}
+ if(server){try{if(process.platform!=="win32"&&server.pid)process.kill(-server.pid,"SIGTERM");else server.kill("SIGTERM")}catch{}await sleep(300)}
  for(const dir of dirs)await rm(dir,{recursive:true,force:true}).catch(()=>{});
 });
