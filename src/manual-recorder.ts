@@ -52,12 +52,12 @@ async function finalizeRecording(){
   await verifyRecordingVideo(join(dir,"capture.webm"));
   await writeJsonAtomic(join(dir,"events.json"),events);
   const summary=recordingEventSummary(events);
-  await writeFile(join(dir,"event-diagnostics.json"),JSON.stringify({bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError},null,2));
+  await writeJsonAtomic(join(dir,"event-diagnostics.json"),{bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError});
   console.log("RECORDING_EVENTS",JSON.stringify(summary));
   if(events.length===0)console.warn("RECORDING_WARNING: no pointer events captured. Check that interactions occurred in the Chromium recording window.");
   await writeJsonAtomic(join(dir,"manifest.json"),{scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url});
   const scenario=defineScenario({id:options.id,title:"Capture Tilo",viewport:{width:options.width,height:options.height},actions:[{type:"wait",ms:0}],video:{duration,fps:30,intro:"Découvrez Tilo",outro:"Apprendre autrement"}});
-  await writeFile(join(dir,"scenario.json"),JSON.stringify(scenario,null,2));
+  await writeJsonAtomic(join(dir,"scenario.json"),scenario);
   await rm(stopFile,{force:true});
   console.log("RECORDING_SAVED",options.id,duration);
  }catch(e){console.error("RECORDING_FAILED",e);process.exitCode=1}
