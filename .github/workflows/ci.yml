@@ -28,3 +28,5 @@ jobs:
         run: pnpm exec tsx src/audit-pointer-smoke.ts
       - name: Studio browser and project management E2E
         run: pnpm exec tsx src/audit-studio-e2e.ts
+      - name: React 19 Select console regression
+        run: pnpm exec tsx src/audit-select-react19.ts
