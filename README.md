@@ -200,3 +200,7 @@ See `docs/FINAL_PRODUCTION_ACCEPTANCE.md` and other documents in `docs/` for val
 Source code is organized around `apps/studio/` (Next.js interface and local API), `src/` (recording, composition, editing, rendering), `tests/` (unit tests), and `.github/workflows/` (CI).
 
 This project is intended for creating screen recordings, product walkthroughs, tutorials, and demos of locally running web applications. It is not affiliated with or endorsed by the maintainers of Playwright, Remotion, Radix UI, or Next.js.
+
+## License
+
+Motion Studio is distributed under the [MIT License](LICENSE). You may use, modify and redistribute the source code, including in commercial projects, provided the license and copyright notice are retained. Third-party dependencies and assets remain subject to their respective licenses.
