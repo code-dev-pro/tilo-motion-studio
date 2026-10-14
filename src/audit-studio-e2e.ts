@@ -27,7 +27,7 @@ async function main(){
   writeFile(join(dirs[0],"manifest.json"),JSON.stringify(manifest)),
   writeFile(join(dirs[0],"events.json"),JSON.stringify([{t:1,type:"click",x:200,y:100}])),
   writeFile(join(dirs[0],"editor.json"),JSON.stringify(defaultEditorSettings())),
-  writeFile(join(dirs[0],"scenario.json"),JSON.stringify({id,title:"Audit fixture",viewport:manifest.viewport,actions:[],video:{duration:3,fps:30,intro:"Intro",outro:"Outro",zoom:1}})),
+  writeFile(join(dirs[0],"scenario.json"),JSON.stringify({id,title:"Audit fixture",viewport:manifest.viewport,actions:[{type:"wait",ms:0}],video:{duration:3,fps:30,intro:"Intro",outro:"Outro",zoom:1}})),
   writeFile(join(dirs[0],"fixture-marker.txt"),"test fixture")
  ]);
  const captureBrowser=await chromium.launch({headless:true});
