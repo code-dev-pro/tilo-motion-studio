@@ -31,4 +31,5 @@ jobs:
       - name: Render and probe MP4 — ${{ matrix.format }}
         env:
           TILO_AUDIT_RENDER: ${{ matrix.format }}
+          TILO_AUDIT_AUDIO: "1"
         run: pnpm exec tsx src/audit-studio-e2e.ts

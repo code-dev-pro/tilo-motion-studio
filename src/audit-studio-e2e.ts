@@ -49,6 +49,18 @@ async function main(){
  assert(copy.status===201,"Project duplicate failed: "+await copy.text());
  const copied=JSON.parse(await readFile(join(dirs[1],"manifest.json"),"utf8")) as {scenario:string};
  assert(copied.scenario===duplicate,"Duplicated manifest identifier not updated");
+ const editor=defaultEditorSettings();
+ editor.animationTracks=[
+  {id:"property-x",property:"x",keyframes:[{t:0,value:0,easing:"linear"},{t:2,value:120,easing:"bezier",bezier:{x1:.2,y1:.1,x2:.8,y2:.9}}]},
+  {id:"property-y",property:"y",keyframes:[{t:0,value:0,easing:"linear"},{t:2,value:80,easing:"ease-in-out"}]}
+ ];
+ editor.spatialHandles=[{t:0,inX:0,inY:0,outX:25,outY:40}];
+ const saved=await fetch(base+"/api/recordings/"+id,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(editor)});
+ assert(saved.ok,"Animated editor settings could not be saved: "+await saved.text());
+ const reloaded=await (await get("/api/recordings/"+id)).json() as {settings:typeof editor};
+ assert(JSON.stringify(reloaded.settings.animationTracks)===JSON.stringify(editor.animationTracks),"Bézier keyframes changed after reload");
+ assert(JSON.stringify(reloaded.settings.spatialHandles)===JSON.stringify(editor.spatialHandles),"Spatial handles changed after reload");
+ console.log("E2E persistence: keyframes and spatial tangents — PASS");
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:1440,height:900}});
@@ -76,6 +88,17 @@ async function main(){
   if(errors.length)console.warn("Studio browser warnings:",errors.join("; "));
   console.log("E2E UI: project load, ruler scrub, playhead visible — PASS");
  }finally{await browser.close()}
+ if(process.env.TILO_AUDIT_AUDIO==="1"){
+  const fileA=join(dirs[0],"audio-audit-ambience.wav"),fileB=join(dirs[0],"audio-audit-voice.wav");
+  await execFileAsync("ffmpeg",["-y","-f","lavfi","-i","sine=frequency=220:duration=3","-ar","44100",fileA],{timeout:30000});
+  await execFileAsync("ffmpeg",["-y","-f","lavfi","-i","sine=frequency=880:duration=1","-ar","44100",fileB],{timeout:30000});
+  const settings=JSON.parse(await readFile(join(dirs[0],"editor.json"),"utf8")) as ReturnType<typeof defaultEditorSettings>;
+  settings.audioTracks=[
+   {id:"audit-ambience",file:"audio-audit-ambience.wav",kind:"ambience",name:"Ambience",start:0,trimStart:0,duration:3,volume:.45,muted:false,solo:false,fadeIn:.1,fadeOut:.1,loop:false},
+   {id:"audit-voice",file:"audio-audit-voice.wav",kind:"voiceover",name:"Voice",start:1,trimStart:0,duration:1,volume:.8,muted:false,solo:false,fadeIn:.05,fadeOut:.05,loop:false}
+  ];
+  await writeFile(join(dirs[0],"editor.json"),JSON.stringify(settings));
+ }
  const renderFormat=process.env.TILO_AUDIT_RENDER;
  if(renderFormat){
   if(!["landscape","portrait","square"].includes(renderFormat))throw Error("Invalid TILO_AUDIT_RENDER format");
@@ -87,6 +110,7 @@ async function main(){
   const video=probe.streams?.find(stream=>stream.codec_type==="video");
   assert(video?.width===expected[0]&&video?.height===expected[1],"MP4 export dimensions invalid");
   assert(video.codec_name==="h264","MP4 video codec must be H.264");
+  if(process.env.TILO_AUDIT_AUDIO==="1"){const audio=probe.streams?.find(stream=>stream.codec_type==="audio");assert(audio?.codec_name==="aac","Expected AAC audio stream in rendered MP4");const {stderr:audioStats}=await execFileAsync("ffmpeg",["-i",file,"-vn","-af","volumedetect","-f","null","-"],{timeout:30000});const level=audioStats.match(/mean_volume:\s*(-?[\d.]+) dB/);console.log("E2E audio level:",level?.[1]??"not detected","dB");assert(level,"FFmpeg did not report mean_volume; inspect audio diagnostics: "+audioStats.slice(-1200));assert(Number(level[1])>-70,"Rendered audio is silent: "+level[1]+" dB")}
   const outputDuration=Number(probe.format?.duration);
   assert(Number.isFinite(outputDuration)&&Math.abs(outputDuration-3)<.15,"MP4 duration differs from expected 3 seconds: "+outputDuration);
   console.log("E2E MP4:",renderFormat,video.width+"x"+video.height,probe.format?.duration+"s — PASS");
