@@ -70,6 +70,15 @@ async function main(){
   await page.goto(base,{waitUntil:"domcontentloaded"});
   await page.locator(".recording-row .recording-item").filter({hasText:id}).first().click();
   await page.locator(".timeline .ruler").waitFor();
+  const toolbar=page.locator(".timeline-head");
+  const toolbarBounds=await toolbar.boundingBox();
+  assert(toolbarBounds,"Timeline toolbar is not visible");
+  const toolbarButtons=toolbar.locator("button");
+  for(let i=0;i<await toolbarButtons.count();i++){
+   const b=await toolbarButtons.nth(i).boundingBox();
+   if(b&&b.x>=toolbarBounds.x&&b.x<toolbarBounds.x+toolbarBounds.width)
+    assert(b.y>=toolbarBounds.y-1&&b.y+b.height<=toolbarBounds.y+toolbarBounds.height+1,"Timeline toolbar button overflows vertically");
+  }
   const ruler=page.locator(".timeline .ruler"),bounds=await ruler.boundingBox();
   assert(bounds,"Ruler is not visible");
   await page.mouse.move(bounds.x+bounds.width*.25,bounds.y+bounds.height/2);
