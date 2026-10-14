@@ -1,7 +1,7 @@
 import {chromium} from "playwright";
 import {spawn,type ChildProcess} from "node:child_process";
-import {mkdtemp,mkdir,readFile,rm,writeFile} from "node:fs/promises";
-import {tmpdir} from "node:os";
+import {mkdir,readFile,rm,writeFile} from "node:fs/promises";
+
 import {join,resolve} from "node:path";
 import {randomUUID} from "node:crypto";
 import {setTimeout as sleep} from "node:timers/promises";
@@ -12,7 +12,7 @@ const base="http://127.0.0.1:3333";
 const id="audit-"+randomUUID().slice(0,8);
 const duplicate=id+"-copy";
 const dirs=[join(output,id),join(output,duplicate)];
-const assert=(condition:unknown,message:string):asserts condition=>{if(!condition)throw Error(message)};
+function assert(condition:unknown,message:string):asserts condition{if(!condition)throw Error(message)}
 let server:ChildProcess|undefined;
 async function waitForServer(){
  for(let i=0;i<90;i++){if(server?.exitCode!==null&&server?.exitCode!==undefined)throw Error("Studio server exited");
@@ -50,7 +50,7 @@ async function main(){
   const page=await browser.newPage({viewport:{width:1440,height:900}});
   const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
   await page.goto(base,{waitUntil:"domcontentloaded"});
-  await page.getByRole("button",{name:new RegExp(id+"$")}).first().click();
+  await page.locator(".recording-row .recording-item").filter({hasText:id}).first().click();
   await page.locator(".timeline .ruler").waitFor();
   const ruler=page.locator(".timeline .ruler"),bounds=await ruler.boundingBox();
   assert(bounds,"Ruler is not visible");
