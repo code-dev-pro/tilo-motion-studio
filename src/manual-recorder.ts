@@ -7,6 +7,7 @@ import {recorderInitScript} from "./recorder-init-script";
 import type {MotionEvent} from "./cinematic";
 import {normalizeRecorderEvent,recordingEventSummary} from "./recorder-events";
 import {defineScenario} from "./core";
+import {recoverRecordedVideo,verifyRecordingVideo,writeJsonAtomic} from "./recording-recovery";
 const options=recordingOptions.parse(JSON.parse(process.env.TILO_RECORDING_OPTIONS||"{}"));
 const dir=resolve("output",options.id);await mkdir(dir,{recursive:true});
 const stopFile=join(dir,".stop");await rm(stopFile,{force:true});
@@ -40,14 +41,15 @@ async function finish(){
  try{
   try{frameStats=await collectFrameStats()}catch(e){diagnosticsError=String(e)}
   const video=page.video();
-  await context.close();
-  if(video)await copyFile(await video.path(),join(dir,"capture.webm"));
-  await writeFile(join(dir,"events.json"),JSON.stringify(events,null,2));
+  if(browser.isConnected())await context.close().catch(e=>console.warn("Context close:",String(e)));
+  try{if(video)await copyFile(await video.path(),join(dir,"capture.webm"));else throw Error("Video unavailable")}catch{await recoverRecordedVideo(dir)}
+  await verifyRecordingVideo(join(dir,"capture.webm"));
+  await writeJsonAtomic(join(dir,"events.json"),events);
   const summary=recordingEventSummary(events);
   await writeFile(join(dir,"event-diagnostics.json"),JSON.stringify({bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError},null,2));
   console.log("RECORDING_EVENTS",JSON.stringify(summary));
   if(events.length===0)console.warn("RECORDING_WARNING: no pointer events captured. Check that interactions occurred in the Chromium recording window.");
-  await writeFile(join(dir,"manifest.json"),JSON.stringify({scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url},null,2));
+  await writeJsonAtomic(join(dir,"manifest.json"),{scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url});
   const scenario=defineScenario({id:options.id,title:"Capture Tilo",viewport:{width:options.width,height:options.height},actions:[{type:"wait",ms:0}],video:{duration,fps:30,intro:"Découvrez Tilo",outro:"Apprendre autrement"}});
   await writeFile(join(dir,"scenario.json"),JSON.stringify(scenario,null,2));
   await rm(stopFile,{force:true});
@@ -58,7 +60,8 @@ async function finish(){
 const stopPoll=setInterval(()=>{void access(stopFile).then(()=>{clearInterval(stopPoll);void finish()}).catch(()=>{})},250);
 process.on("SIGINT",()=>{void finish()});
 process.on("SIGTERM",()=>{void finish()});
-browser.on("disconnected",()=>{if(!stopping){console.error("Browser closed before recording finalized");process.exitCode=1;process.exit()}});
+page.on("close",()=>{if(start&&!stopping)void finish()});
+browser.on("disconnected",()=>{if(start&&!stopping)void finish()});
 try{await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:20000});
  const bindingPresent=await page.evaluate(async()=>{const w=window as unknown as {__tiloRecordEvent?:(event:unknown)=>Promise<void>};if(typeof w.__tiloRecordEvent!=="function")return false;await w.__tiloRecordEvent({probe:true});return true});
  if(!bindingPresent||bridgeCount===0)throw Error("Event bridge self-test failed; capture would produce empty events.json");
