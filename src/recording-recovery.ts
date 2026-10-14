@@ -3,7 +3,7 @@ import {join} from "node:path";
 export async function recoverRecordedVideo(dir:string,destination=join(dir,"capture.webm")):Promise<string>{
  const entries=await readdir(dir,{withFileTypes:true});
  const candidates=await Promise.all(entries.filter(e=>e.isFile()&&e.name.endsWith(".webm")&&e.name!=="capture.webm").map(async e=>({path:join(dir,e.name),info:await stat(join(dir,e.name))})));
- const valid=candidates.filter(e=>e.info.size>0).sort((a,b)=>b.info.mtimeMs-a.info.mtimeMs);
+ const valid=candidates.filter(e=>e.info.size>0).sort((a,b)=>b.info.mtimeMs-a.info.mtimeMs||a.path.localeCompare(b.path));
  if(!valid.length)throw Error("No finalized WebM available for recovery");
  await copyFile(valid[0].path,destination);
  return destination;
