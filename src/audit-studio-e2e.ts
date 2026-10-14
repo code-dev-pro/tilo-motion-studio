@@ -110,7 +110,7 @@ async function main(){
   const video=probe.streams?.find(stream=>stream.codec_type==="video");
   assert(video?.width===expected[0]&&video?.height===expected[1],"MP4 export dimensions invalid");
   assert(video.codec_name==="h264","MP4 video codec must be H.264");
-  if(process.env.TILO_AUDIT_AUDIO==="1"){const audio=probe.streams?.find(stream=>stream.codec_type==="audio");assert(audio?.codec_name==="aac","Expected AAC audio stream in rendered MP4")}
+  if(process.env.TILO_AUDIT_AUDIO==="1"){const audio=probe.streams?.find(stream=>stream.codec_type==="audio");assert(audio?.codec_name==="aac","Expected AAC audio stream in rendered MP4");const {stderr:audioStats}=await execFileAsync("ffmpeg",["-i",file,"-vn","-af","volumedetect","-f","null","-"],{timeout:30000});const level=audioStats.match(/mean_volume:\\s*(-?[\\d.]+) dB/);assert(level&&Number(level[1])>-70,"Rendered audio is silent or missing")}
   const outputDuration=Number(probe.format?.duration);
   assert(Number.isFinite(outputDuration)&&Math.abs(outputDuration-3)<.15,"MP4 duration differs from expected 3 seconds: "+outputDuration);
   console.log("E2E MP4:",renderFormat,video.width+"x"+video.height,probe.format?.duration+"s — PASS");
