@@ -76,6 +76,17 @@ async function main(){
   if(errors.length)console.warn("Studio browser warnings:",errors.join("; "));
   console.log("E2E UI: project load, ruler scrub, playhead visible — PASS");
  }finally{await browser.close()}
+ if(process.env.TILO_AUDIT_AUDIO==="1"){
+  const fileA=join(dirs[0],"audio-audit-ambience.wav"),fileB=join(dirs[0],"audio-audit-voice.wav");
+  await execFileAsync("ffmpeg",["-y","-f","lavfi","-i","sine=frequency=220:duration=3","-ar","44100",fileA],{timeout:30000});
+  await execFileAsync("ffmpeg",["-y","-f","lavfi","-i","sine=frequency=880:duration=1","-ar","44100",fileB],{timeout:30000});
+  const settings=defaultEditorSettings();
+  settings.audioTracks=[
+   {id:"audit-ambience",file:"audio-audit-ambience.wav",kind:"ambience",name:"Ambience",start:0,trimStart:0,duration:3,volume:.45,muted:false,solo:false,fadeIn:.1,fadeOut:.1,loop:false},
+   {id:"audit-voice",file:"audio-audit-voice.wav",kind:"voiceover",name:"Voice",start:1,trimStart:0,duration:1,volume:.8,muted:false,solo:false,fadeIn:.05,fadeOut:.05,loop:false}
+  ];
+  await writeFile(join(dirs[0],"editor.json"),JSON.stringify(settings));
+ }
  const renderFormat=process.env.TILO_AUDIT_RENDER;
  if(renderFormat){
   if(!["landscape","portrait","square"].includes(renderFormat))throw Error("Invalid TILO_AUDIT_RENDER format");
@@ -87,6 +98,7 @@ async function main(){
   const video=probe.streams?.find(stream=>stream.codec_type==="video");
   assert(video?.width===expected[0]&&video?.height===expected[1],"MP4 export dimensions invalid");
   assert(video.codec_name==="h264","MP4 video codec must be H.264");
+  if(process.env.TILO_AUDIT_AUDIO==="1"){const audio=probe.streams?.find(stream=>stream.codec_type==="audio");assert(audio?.codec_name==="aac","Expected AAC audio stream in rendered MP4")}
   const outputDuration=Number(probe.format?.duration);
   assert(Number.isFinite(outputDuration)&&Math.abs(outputDuration-3)<.15,"MP4 duration differs from expected 3 seconds: "+outputDuration);
   console.log("E2E MP4:",renderFormat,video.width+"x"+video.height,probe.format?.duration+"s — PASS");
