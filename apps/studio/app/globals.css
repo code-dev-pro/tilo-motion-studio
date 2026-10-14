@@ -182,3 +182,48 @@ html,body{background:var(--background);color:var(--foreground)}
 .capture-actions{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
 .sidebar .pane-content>.field+.capture-actions{margin-top:14px}
 @media(max-width:1000px){.preview-head{min-height:90px;gap:10px}.preview-head>.inline:last-child{margin-left:auto}}
+
+
+/* Keep timeline actions inside their toolbar at every panel width. */
+.timeline .timeline-head{
+ box-sizing:border-box;
+ height:54px;
+ min-height:54px;
+ flex:0 0 54px;
+ padding:7px 12px;
+ display:flex;
+ align-items:center;
+ flex-wrap:nowrap;
+ gap:12px;
+ overflow-x:auto;
+ overflow-y:hidden;
+ scrollbar-width:thin;
+}
+.timeline .timeline-head>.inline{
+ display:flex;
+ align-items:center;
+ flex:0 0 auto;
+ gap:6px;
+ flex-wrap:nowrap;
+ white-space:nowrap;
+ min-width:max-content;
+}
+.timeline .timeline-head .btn{
+ box-sizing:border-box;
+ min-height:34px;
+ height:34px;
+ padding:5px 10px;
+ flex:0 0 auto;
+}
+.timeline .timeline-head .btn.icon{
+ width:34px;
+ padding:5px;
+}
+.timeline .timeline-head>.btn:last-child{
+ flex:0 0 auto;
+ margin-left:auto;
+}
+.timeline .timeline-scroll{
+ min-height:0;
+ flex:1 1 auto;
+}
