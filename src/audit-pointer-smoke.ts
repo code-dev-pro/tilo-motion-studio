@@ -9,6 +9,7 @@ async function main(){
   await context.addInitScript({content:recorderInitScript});
   const page=await context.newPage();
   await page.setContent('<!doctype html><html><body><button id="test" style="position:absolute;left:100px;top:100px;width:180px;height:70px">Test</button></body></html>');
+  await page.addScriptTag({content:recorderInitScript});
   await page.mouse.move(110,110);
   await page.mouse.move(160,120,{steps:5});
   await page.mouse.click(160,120);
