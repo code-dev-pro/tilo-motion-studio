@@ -60,8 +60,17 @@ async function main(){
   await page.mouse.down();await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height/2,{steps:6});await page.mouse.up();
   const transport=await page.locator(".transport .muted").innerText();
   assert(/\/ 12\.00 s/.test(transport),"Transport duration incorrect: "+transport);
+  const scrubTime=Number(transport.split(" / ")[0]);assert(scrubTime>0.5&&scrubTime<3,"Ruler drag did not scrub: "+transport);
   const playhead=page.getByRole("button",{name:"Déplacer la tête de lecture"});
   assert(await playhead.isVisible(),"Draggable playhead missing");
+  const clip=page.locator(".video-timeline-clip").first();await clip.waitFor();
+  const initialWidth=(await clip.boundingBox())?.width??0;assert(initialWidth>0,"Video clip has no width");
+  const grip=clip.locator(".video-trim-handle.right");const gripBox=await grip.boundingBox();assert(gripBox,"Right trim handle not visible");
+  await page.mouse.move(gripBox.x+gripBox.width/2,gripBox.y+gripBox.height/2);
+  await page.mouse.down();await page.mouse.move(gripBox.x+gripBox.width/2-60,gripBox.y+gripBox.height/2,{steps:8});await page.mouse.up();
+  const trimmedWidth=(await clip.boundingBox())?.width??0;
+  assert(trimmedWidth<initialWidth,"Right trim did not shorten video clip");
+  assert((await page.locator(".ruler").innerText()).includes("3s"),"Trimming changed ruler scale");
   if(errors.length)console.warn("Studio browser warnings:",errors.join("; "));
   console.log("E2E UI: project load, ruler scrub, playhead visible — PASS");
  }finally{await browser.close()}
