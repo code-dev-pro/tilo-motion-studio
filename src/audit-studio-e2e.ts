@@ -49,6 +49,18 @@ async function main(){
  assert(copy.status===201,"Project duplicate failed: "+await copy.text());
  const copied=JSON.parse(await readFile(join(dirs[1],"manifest.json"),"utf8")) as {scenario:string};
  assert(copied.scenario===duplicate,"Duplicated manifest identifier not updated");
+ const editor=defaultEditorSettings();
+ editor.animationTracks=[
+  {id:"property-x",property:"x",keyframes:[{t:0,value:0,easing:"linear"},{t:2,value:120,easing:"bezier",bezier:{x1:.2,y1:.1,x2:.8,y2:.9}}]},
+  {id:"property-y",property:"y",keyframes:[{t:0,value:0,easing:"linear"},{t:2,value:80,easing:"ease-in-out"}]}
+ ];
+ editor.spatialHandles=[{t:0,inX:0,inY:0,outX:25,outY:40}];
+ const saved=await fetch(base+"/api/recordings/"+id,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(editor)});
+ assert(saved.ok,"Animated editor settings could not be saved: "+await saved.text());
+ const reloaded=await (await get("/api/recordings/"+id)).json() as {settings:typeof editor};
+ assert(JSON.stringify(reloaded.settings.animationTracks)===JSON.stringify(editor.animationTracks),"Bézier keyframes changed after reload");
+ assert(JSON.stringify(reloaded.settings.spatialHandles)===JSON.stringify(editor.spatialHandles),"Spatial handles changed after reload");
+ console.log("E2E persistence: keyframes and spatial tangents — PASS");
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:1440,height:900}});
