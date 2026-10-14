@@ -27,3 +27,5 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Isolated pointer capture smoke test
         run: pnpm exec tsx src/audit-pointer-smoke.ts
+      - name: Studio browser and project management E2E
+        run: pnpm exec tsx src/audit-studio-e2e.ts
