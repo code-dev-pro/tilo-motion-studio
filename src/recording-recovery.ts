@@ -1,4 +1,4 @@
-import {copyFile,mkdir,readFile,readdir,rename,stat,writeFile} from "node:fs/promises";
+import {copyFile,readdir,rename,stat,writeFile} from "node:fs/promises";
 import {join} from "node:path";
 export async function recoverRecordedVideo(dir:string,destination=join(dir,"capture.webm")):Promise<string>{
  const entries=await readdir(dir,{withFileTypes:true});
