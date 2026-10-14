@@ -61,7 +61,7 @@ async function main(){
   await page.mouse.move(bounds.x+bounds.width*.25,bounds.y+bounds.height/2);
   await page.mouse.down();await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height/2,{steps:6});await page.mouse.up();
   const transport=await page.locator(".transport .muted").innerText();
-  assert(/\/ 12\.00 s/.test(transport),"Transport duration incorrect: "+transport);
+  assert(/\/ 3\.00 s/.test(transport),"Transport duration incorrect: "+transport);
   const scrubTime=Number(transport.split(" / ")[0]);assert(scrubTime>0.5&&scrubTime<3,"Ruler drag did not scrub: "+transport);
   const playhead=page.getByRole("button",{name:"Déplacer la tête de lecture"});
   assert(await playhead.isVisible(),"Draggable playhead missing");
