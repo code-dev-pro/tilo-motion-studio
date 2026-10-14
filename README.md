@@ -99,6 +99,9 @@ The source recording remains separate from the edited settings and rendered outp
 
 ## CLI usage
 
+Some CLI environment variables and repository paths still use the historical `TILO_` prefix for compatibility. These names do **not** restrict the applications that can be recorded. The generic manual recording workflow does not require a Tilo-specific integration.
+
+
 ### Capture a scripted scenario
 
 ```bash
@@ -110,7 +113,7 @@ Available built-in scenarios are defined in `src/scenarios.ts`. The default fixt
 ### Render a saved manual recording
 
 ```bash
-pnpm render --recording tilo-demo --format landscape
+pnpm render --recording product-demo --format landscape
 ```
 
 ### Render a built-in scenario
@@ -132,7 +135,7 @@ Supported formats:
 Manual recordings are stored under `output/<recording-id>/`, for example:
 
 ```text
-output/tilo-demo/
+output/product-demo/
 ├── capture.webm          # Raw browser recording
 ├── events.json           # Pointer/click/scroll event timeline
 ├── event-diagnostics.json
