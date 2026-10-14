@@ -24,7 +24,7 @@ const settingsSchema=z.object({spatialHandles:z.array(spatialHandleSchema).max(3
  background:z.string().regex(/^#[0-9a-fA-F]{6}$/),radius:z.number().int().min(0).max(48),shadow:z.boolean(),
  camera:z.array(z.object({t:z.number().nonnegative(),x:z.number().min(0).max(1),y:z.number().min(0).max(1),scale:z.number().min(1).max(2)}))
 });
-const defaults={spatialHandles:[],animationTracks:[],audioMixer:mixerDefaults,audioTracks:[],canvasBackground:canvasBackgroundDefaults,advancedCamera:advancedCameraDefaults,environment:environmentDefaults,cursorSettings:{visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"},clips:[],scene:{fit:"contain",scale:1,offsetX:0,offsetY:0},intro:"Découvrez Tilo",outro:"Apprendre autrement",zoom:1.06,autoZoom:true,cursor:true,background:"#101827",radius:24,shadow:true,camera:[]};
+const defaults={spatialHandles:[],animationTracks:[],audioMixer:mixerDefaults,audioTracks:[],canvasBackground:canvasBackgroundDefaults,advancedCamera:advancedCameraDefaults,environment:environmentDefaults,cursorSettings:{visible:true,hideWhenIdle:false,style:"modern",size:1.5,clickEffect:"ripple",movement:"smooth"},clips:[],scene:{fit:"contain",scale:1,offsetX:0,offsetY:0},intro:"Product demo",outro:"Thanks for watching",zoom:1.06,autoZoom:true,cursor:true,background:"#101827",radius:24,shadow:true,camera:[]};
 function permitted(req:Request){const host=req.headers.get("host")||"",origin=req.headers.get("origin");return /^(localhost|127\.0\.0\.1):3333$/.test(host)&&(!origin||new URL(origin).host===host)}
 export async function GET(req:Request,{params}:{params:Promise<{id:string}>}){
  if(!permitted(req))return NextResponse.json({error:"Local only"},{status:403});

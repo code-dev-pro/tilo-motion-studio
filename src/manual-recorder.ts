@@ -56,7 +56,7 @@ async function finalizeRecording(){
   console.log("RECORDING_EVENTS",JSON.stringify(summary));
   if(events.length===0)console.warn("RECORDING_WARNING: no pointer events captured. Check that interactions occurred in the Chromium recording window.");
   await writeJsonAtomic(join(dir,"manifest.json"),{scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url});
-  const scenario=defineScenario({id:options.id,title:"Capture Tilo",viewport:{width:options.width,height:options.height},actions:[{type:"wait",ms:0}],video:{duration,fps:30,intro:"Découvrez Tilo",outro:"Apprendre autrement"}});
+  const scenario=defineScenario({id:options.id,title:"Screen recording",viewport:{width:options.width,height:options.height},actions:[{type:"wait",ms:0}],video:{duration,fps:30,intro:"Product demo",outro:"Thanks for watching"}});
   await writeJsonAtomic(join(dir,"scenario.json"),scenario);
   await rm(stopFile,{force:true});
   console.log("RECORDING_SAVED",options.id,duration);
