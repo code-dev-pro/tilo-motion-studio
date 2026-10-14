@@ -1,21 +1,21 @@
-# Tilo Motion Studio
+# Motion Studio
 
-**A local-first screen recording and cinematic video editing studio for creating polished demonstrations of Tilo.**
+**A local-first screen recording and cinematic video editing studio for creating polished demonstrations of locally running web applications.**
 
-Tilo Motion Studio records a running web application in Chromium, captures cursor interactions, and lets you compose and export presentation-ready videos using a browser-based editor. It combines **Playwright** for capture, **Remotion** for timeline-based rendering, and **Next.js / React** for the Studio interface.
+Motion Studio records any supported locally running web application in Chromium, captures cursor interactions, and lets you compose and export presentation-ready videos using a browser-based editor. It combines **Playwright** for capture, **Remotion** for timeline-based rendering, and **Next.js / React** for the Studio interface.
 
 > **Project status:** Active development / pre-1.0. Automated tests cover key workflows, but this is not yet a fully hardened, general-purpose video editor. See [Known limitations](#known-limitations).
 
 ## Screenshot
 
-![Tilo Motion Studio interface](docs/images/studio-overview.png)
+![Motion Studio interface](docs/images/studio-overview.png)
 
 *The screenshot illustrates the Studio layout: project library and recording controls on the left, video preview and multitrack timeline in the center, and property inspectors on the right.*
 
 ## Features
 
-- **Manual browser recording:** open a local Tilo page in Chromium, record video and capture pointer moves, clicks, and scrolls.
-- **Automated scenarios:** script navigation, clicks, drags, waits, and supported Tilo bridge actions with Playwright.
+- **Manual browser recording:** open a local web application in Chromium, record video and capture pointer moves, clicks, and scrolls.
+- **Automated scenarios:** script navigation, clicks, drags, waits, and optional application-specific bridge actions with Playwright.
 - **Video editing:** arrange and split clips, trim clip boundaries, scrub the playhead, use snapping and timeline zoom.
 - **Cinematic camera:** automatic click-driven zoom, manually configured camera keyframes, rotation, scene framing, and spatial X/Y animation.
 - **Animated cursor:** selectable pointer styles, motion smoothing, click effects, and idle hiding.
@@ -48,7 +48,7 @@ The editor is served locally. It is **not** a hosted SaaS or a native macOS appl
 - **pnpm 10.18.3** (declared by the root package).
 - **Chromium for Playwright**, installed with the command below.
 - **macOS** for the primary manual-recording workflow; CI also exercises headless Chromium on Linux.
-- A running local Tilo instance for recording the actual application (normally `http://localhost:3000`).
+- Any locally running web application accessible at `http://localhost:<port>` or `http://127.0.0.1:<port>` (for example, a React, Next.js, Vue, or Svelte development server).
 - **FFmpeg / FFprobe** for media verification and certain test workflows.
 - Enough free disk space for uncompressed/intermediate capture data and rendered MP4 files.
 
@@ -74,7 +74,7 @@ pnpm exec playwright install --with-deps chromium
 
 ## Start the Studio
 
-Start the Tilo application separately on port **3000**, then run:
+Start your web application on a local port (for example **3000**), then run:
 
 ```bash
 pnpm studio
@@ -82,7 +82,7 @@ pnpm studio
 
 Open **http://127.0.0.1:3333**. The Studio UI and its local API are bound to the local machine.
 
-In the left panel, enter the local Tilo URL, a recording name, and a capture resolution. Click **REC**, interact with Tilo in the Chromium window, then use **Stop** to finalize the recording. Select the completed project from the library.
+In the left panel, enter your application's local URL, a recording name, and a capture resolution. Click **REC**, interact with your application in the Chromium window, then use **Stop** to finalize the recording. Select the completed project from the library.
 
 You can also close the capture window to request finalization; abrupt browser termination may leave an incomplete video.
 
@@ -182,7 +182,7 @@ See `docs/FINAL_PRODUCTION_ACCEPTANCE.md` and other documents in `docs/` for val
 
 ## Troubleshooting
 
-**Studio cannot load Tilo:** confirm that Tilo is running on port 3000 and that the URL is local.
+**Studio cannot load your application:** confirm that your web development server is running and that its URL uses localhost or 127.0.0.1.
 
 **No pointer events:** inspect `event-diagnostics.json` and run `pnpm diagnose:pointer`.
 
@@ -196,4 +196,4 @@ See `docs/FINAL_PRODUCTION_ACCEPTANCE.md` and other documents in `docs/` for val
 
 Source code is organized around `apps/studio/` (Next.js interface and local API), `src/` (recording, composition, editing, rendering), `tests/` (unit tests), and `.github/workflows/` (CI).
 
-This project is primarily intended for producing Tilo educational product demonstrations. It is not affiliated with or endorsed by the maintainers of Playwright, Remotion, Radix UI, or Next.js.
+This project is intended for creating screen recordings, product walkthroughs, tutorials, and demos of locally running web applications. It is not affiliated with or endorsed by the maintainers of Playwright, Remotion, Radix UI, or Next.js.
