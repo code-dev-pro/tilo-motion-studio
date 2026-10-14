@@ -1,11 +1,13 @@
 import {chromium} from "playwright";
-import {spawn,type ChildProcess} from "node:child_process";
+import {spawn,execFile,type ChildProcess} from "node:child_process";
+import {promisify} from "node:util";
 import {copyFile,mkdir,readFile,rm,writeFile} from "node:fs/promises";
 
 import {join,resolve} from "node:path";
 import {randomUUID} from "node:crypto";
 import {setTimeout as sleep} from "node:timers/promises";
 import {defaultEditorSettings} from "./editor";
+const execFileAsync=promisify(execFile);
 const root=resolve(".");
 const output=join(root,"output");
 const base="http://127.0.0.1:3333";
@@ -74,6 +76,19 @@ async function main(){
   if(errors.length)console.warn("Studio browser warnings:",errors.join("; "));
   console.log("E2E UI: project load, ruler scrub, playhead visible — PASS");
  }finally{await browser.close()}
+ const renderFormat=process.env.TILO_AUDIT_RENDER;
+ if(renderFormat){
+  if(!["landscape","portrait","square"].includes(renderFormat))throw Error("Invalid TILO_AUDIT_RENDER format");
+  await execFileAsync("pnpm",["render","--recording",id,"--format",renderFormat],{cwd:root,timeout:240000,maxBuffer:2_000_000});
+  const file=join(dirs[0],renderFormat+".mp4");
+  const {stdout}=await execFileAsync("ffprobe",["-v","error","-show_entries","format=duration:stream=codec_type,width,height","-of","json",file],{timeout:30000});
+  const probe=JSON.parse(stdout) as {format?:{duration?:string};streams?:{codec_type:string;width?:number;height?:number}[]};
+  const expected=renderFormat==="landscape"?[1920,1080]:renderFormat==="portrait"?[1080,1920]:[1080,1080];
+  const video=probe.streams?.find(stream=>stream.codec_type==="video");
+  assert(video?.width===expected[0]&&video?.height===expected[1],"MP4 export dimensions invalid");
+  assert(Number(probe.format?.duration)>0,"MP4 export duration invalid");
+  console.log("E2E MP4:",renderFormat,video.width+"x"+video.height,probe.format?.duration+"s — PASS");
+ }
  const deleted=await fetch(base+"/api/recordings/"+duplicate+"/manage",{method:"DELETE",headers:{"x-confirm-project-delete":duplicate}});
  assert(deleted.ok,"Delete of duplicate failed");
  const stillExists=await get("/api/recordings/"+id);
