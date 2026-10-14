@@ -92,7 +92,7 @@ async function main(){
   const fileA=join(dirs[0],"audio-audit-ambience.wav"),fileB=join(dirs[0],"audio-audit-voice.wav");
   await execFileAsync("ffmpeg",["-y","-f","lavfi","-i","sine=frequency=220:duration=3","-ar","44100",fileA],{timeout:30000});
   await execFileAsync("ffmpeg",["-y","-f","lavfi","-i","sine=frequency=880:duration=1","-ar","44100",fileB],{timeout:30000});
-  const settings=defaultEditorSettings();
+  const settings=JSON.parse(await readFile(join(dirs[0],"editor.json"),"utf8")) as ReturnType<typeof defaultEditorSettings>;
   settings.audioTracks=[
    {id:"audit-ambience",file:"audio-audit-ambience.wav",kind:"ambience",name:"Ambience",start:0,trimStart:0,duration:3,volume:.45,muted:false,solo:false,fadeIn:.1,fadeOut:.1,loop:false},
    {id:"audit-voice",file:"audio-audit-voice.wav",kind:"voiceover",name:"Voice",start:1,trimStart:0,duration:1,volume:.8,muted:false,solo:false,fadeIn:.05,fadeOut:.05,loop:false}
