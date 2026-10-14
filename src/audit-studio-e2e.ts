@@ -38,6 +38,8 @@ async function main(){
  let stderr="";server.stderr?.on("data",chunk=>{stderr=(stderr+chunk.toString()).slice(-2000)});
  await waitForServer();
  const get=async(path:string)=>fetch(base+path);
+ const idleExport=await get("/api/render");assert(idleExport.ok,"Export status endpoint unavailable");
+ const idleCancel=await fetch(base+"/api/render",{method:"DELETE"});assert(idleCancel.status===409,"Cancelling with no export must return 409");
  const list=await (await get("/api/recordings")).json() as {recordings:{id:string}[]};
  assert(list.recordings.some(r=>r.id===id),"Fixture missing from project library");
  const detail=await get("/api/recordings/"+id);assert(detail.ok,"Project detail not readable");
