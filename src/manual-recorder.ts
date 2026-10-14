@@ -16,6 +16,7 @@ const context=await browser.newContext({viewport:{width:options.width,height:opt
 const page=await context.newPage();
 const events:MotionEvent[]=[];
 let start=0,stopping=false,bridgeCount=0;
+let finalization:Promise<void>|null=null;
 const sourceCounts:Record<string,number>={};const pageUrls:string[]=[];
 context.on("page",p=>{pageUrls.push(p.url());p.on("framenavigated",f=>{if(f===p.mainFrame())pageUrls.push(f.url())})});
 await context.exposeBinding("__tiloRecordEvent",async(source,raw:unknown)=>{
@@ -36,7 +37,12 @@ let syntheticProbe:{bridgeDelta:number;stats:Awaited<ReturnType<typeof collectFr
 let diagnosticsError:string|null=null;
 let domProbe:{before:number;after:number;stats:Awaited<ReturnType<typeof collectFrameStats>>;error?:string}|null=null;
 async function finish(){
- if(stopping)return;stopping=true;
+ if(finalization)return finalization;
+ stopping=true;
+ finalization=finalizeRecording();
+ return finalization;
+}
+async function finalizeRecording(){
  const duration=Math.max(1,(Date.now()-start)/1000);
  try{
   try{frameStats=await collectFrameStats()}catch(e){diagnosticsError=String(e)}
