@@ -168,6 +168,42 @@ TILO_AUDIT_RENDER=landscape TILO_AUDIT_AUDIO=1 pnpm exec tsx src/audit-studio-e2
 
 GitHub Actions includes a three-format export matrix. Automated tests check technical properties such as video dimensions, H.264 encoding, duration, audio stream presence, and non-silence. They **do not** establish subjective audio or image quality.
 
+## Roadmap
+
+Motion Studio is an early developer preview. The roadmap below outlines planned directions rather than committed release dates. Priorities may change based on community feedback and technical validation.
+
+### Phase 1 — Smarter recording
+
+- [ ] **Remote HTTPS capture** — record publicly accessible web applications, with network safety checks and redirect validation.
+- [ ] **DOM-aware recording** — capture element bounds and semantic interaction metadata while respecting sensitive inputs.
+- [ ] **Smart Focus** — automatically frame relevant clicked or focused UI elements instead of only following cursor coordinates.
+- [ ] **Responsive capture** — create desktop, tablet, and mobile viewport recordings.
+
+### Phase 2 — Better editing
+
+- [ ] **Cursor Path Editor** — visually adjust pointer trajectories with draggable Bézier handles.
+- [ ] **Smart Cut** — detect and suggest removal of inactive segments without disrupting important interactions.
+- [ ] **Scroll smoothing** — create more cinematic scroll motion and transitions.
+- [ ] **Advanced timeline workflows** — improve multi-clip editing, snapping, ripple options, and transactional undo/redo.
+
+### Phase 3 — Creative tools
+
+- [ ] **Animated annotations** — callouts, arrows, highlights, and text overlays on independent timeline tracks.
+- [ ] **Automatic subtitles** — generate and edit synchronized captions for narration.
+- [ ] **Templates and presets** — reuse camera, cursor, background, and title styles.
+- [ ] **Browser and device frames** — present recordings in polished browser, desktop, and mobile mockups.
+
+### Phase 4 — Production workflow
+
+- [ ] **Batch export** — render multiple aspect ratios and presets from one project.
+- [ ] **Portable projects** — package recordings, settings, and assets for backup and transfer.
+- [ ] **Background rendering** — improve export progress, cancellation cleanup, and job recovery.
+- [ ] **Performance and reliability** — benchmark long recordings, large timelines, and audio-heavy projects.
+
+### Contributing to the roadmap
+
+Feature suggestions, bug reports, and pull requests are welcome. Please open a [GitHub issue](https://github.com/code-dev-pro/tilo-motion-studio/issues) to discuss larger changes before implementing them.
+
 ## Known limitations
 
 - **Local recording only:** manual capture URLs are restricted to `localhost` / `127.0.0.1`; arbitrary remote websites are not supported by the manual recorder.
