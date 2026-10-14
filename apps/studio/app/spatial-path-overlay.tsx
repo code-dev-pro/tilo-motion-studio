@@ -19,7 +19,7 @@ export function SpatialPathOverlay({tracks,handles,time,width,height,onChange,on
   else onHandlesChange(updateSpatialHandle(handles,point,g.kind,p.x,p.y));
  }
  const path=points.length?"M"+coord(points[0]).x+" "+coord(points[0]).y+points.slice(1).map((p,i)=>{const prev=points[i],a=handles.find(h=>h.t===prev.t),b=handles.find(h=>h.t===p.t),dx=(p.x-prev.x)/3,dy=(p.y-prev.y)/3;const c1=coord({x:prev.x+(a?.outX??dx),y:prev.y+(a?.outY??dy)}),c2=coord({x:p.x+(b?.inX??-dx),y:p.y+(b?.inY??-dy)}),end=coord(p);return " C"+c1.x+" "+c1.y+" "+c2.x+" "+c2.y+" "+end.x+" "+end.y}).join(""):"";
- function handlePointer(e:ReactPointerEvent<SVGSVGElement>,t:number,kind:Gesture["kind"]){e.preventDefault();e.stopPropagation();onGestureStart();drag.current={t,kind};ref.current?.setPointerCapture(e.pointerId);onSeek(t)}
+ function handlePointer(e:ReactPointerEvent<SVGCircleElement>,t:number,kind:Gesture["kind"]){e.preventDefault();e.stopPropagation();onGestureStart();drag.current={t,kind};ref.current?.setPointerCapture(e.pointerId);onSeek(t)}
  return <svg ref={ref} className="spatial-path-overlay" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-label="Trajectoire spatiale avec tangentes" onPointerMove={update} onPointerUp={e=>{update(e);drag.current=null;onGestureEnd()}} onPointerCancel={()=>{drag.current=null;onGestureEnd()}}>
   <path d={path} fill="none" stroke="#FFF" strokeWidth="2.5" strokeDasharray="8 6" pointerEvents="none"/>
   {points.map((p,i)=>{const h=handles.find(a=>a.t===p.t),base=coord(p);return <g key={p.t}>
