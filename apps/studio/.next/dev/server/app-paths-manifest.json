@@ -1,9 +1,0 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/media/[id]/[file]/route": "app/api/media/[id]/[file]/route.js",
-  "/api/record/route": "app/api/record/route.js",
-  "/api/recordings/[id]/route": "app/api/recordings/[id]/route.js",
-  "/api/recordings/route": "app/api/recordings/route.js",
-  "/api/render/route": "app/api/render/route.js",
-  "/page": "app/page.js"
-}

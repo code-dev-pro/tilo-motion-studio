@@ -1,5 +1,23 @@
+# Next.js
+.next/
+**/.next/
+out/
+
+# Dependencies and caches
 node_modules/
-output/
+*.tsbuildinfo
+.turbo/
+
+# Local development
 .env
+.env.local
+.env.*.local
+*.log
+
+# Generated media
+output/
 *.mp4
 *.webm
+
+# macOS
+.DS_Store
