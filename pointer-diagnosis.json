@@ -1,0 +1,5 @@
+
+> tilo-motion-studio@0.1.0 diagnose:pointer /Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio
+> tsx src/diagnose-pointer.ts
+
+ ELIFECYCLE  Command failed with exit code 1.

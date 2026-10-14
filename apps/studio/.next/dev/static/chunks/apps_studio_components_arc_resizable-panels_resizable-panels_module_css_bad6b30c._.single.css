@@ -1,0 +1,171 @@
+/* [project]/apps/studio/components/arc/resizable-panels/resizable-panels.module.css [app-client] (css) */
+.resizable-panels-module__pcaq3G__group {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.resizable-panels-module__pcaq3G__group[data-resizing] {
+  cursor: col-resize;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.resizable-panels-module__pcaq3G__group[data-resizing] .resizable-panels-module__pcaq3G__content {
+  pointer-events: none;
+}
+
+.resizable-panels-module__pcaq3G__panel {
+  min-width: var(--panel-min);
+  max-width: var(--panel-max);
+  flex: 0 1 0;
+  min-height: 0;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.resizable-panels-module__pcaq3G__panel[data-anchor="end"] {
+  justify-content: flex-end;
+}
+
+.resizable-panels-module__pcaq3G__panel[data-free], .resizable-panels-module__pcaq3G__panel[data-collapsed] {
+  min-width: 0;
+  max-width: none;
+}
+
+.resizable-panels-module__pcaq3G__content {
+  flex-direction: column;
+  flex: none;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+}
+
+.resizable-panels-module__pcaq3G__panel[data-free] .resizable-panels-module__pcaq3G__content, .resizable-panels-module__pcaq3G__panel[data-collapsed] .resizable-panels-module__pcaq3G__content {
+  min-width: var(--panel-min);
+}
+
+.resizable-panels-module__pcaq3G__handle {
+  z-index: 2;
+  background: var(--border);
+  cursor: col-resize;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+  outline: none;
+  flex: 0 0 1px;
+  position: relative;
+}
+
+.resizable-panels-module__pcaq3G__handle:before {
+  content: "";
+  position: absolute;
+  inset: 0 -6px;
+}
+
+.resizable-panels-module__pcaq3G__handle[data-collapsed] {
+  cursor: pointer;
+  background: none;
+}
+
+.resizable-panels-module__pcaq3G__grip {
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+  opacity: 0;
+  pointer-events: none;
+  width: 4px;
+  height: 32px;
+  transition: opacity var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), transform var(--duration-spring) var(--ease-spring);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%)scaleY(.6);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .resizable-panels-module__pcaq3G__handle:not([data-collapsed]):hover {
+    background: var(--border-strong);
+  }
+
+  .resizable-panels-module__pcaq3G__handle:not([data-collapsed]):hover .resizable-panels-module__pcaq3G__grip {
+    opacity: 1;
+    transform: translate(-50%, -50%)scaleY(1);
+  }
+
+  .resizable-panels-module__pcaq3G__handle[data-collapsed]:hover .resizable-panels-module__pcaq3G__restore {
+    border-color: var(--border-strong);
+    color: var(--foreground);
+  }
+}
+
+.resizable-panels-module__pcaq3G__handle[data-active] {
+  background: var(--border-strong);
+}
+
+.resizable-panels-module__pcaq3G__handle[data-active] .resizable-panels-module__pcaq3G__grip {
+  background: var(--foreground);
+  opacity: 1;
+  transform: translate(-50%, -50%)scaleY(1);
+}
+
+.resizable-panels-module__pcaq3G__handle:focus-visible:not([data-collapsed]) .resizable-panels-module__pcaq3G__grip {
+  opacity: 1;
+  transform: translate(-50%, -50%)scaleY(1);
+}
+
+.resizable-panels-module__pcaq3G__handle[data-collapsed]:focus-visible .resizable-panels-module__pcaq3G__restore {
+  border-color: var(--border-strong);
+  color: var(--foreground);
+}
+
+.resizable-panels-module__pcaq3G__restore {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  width: 18px;
+  height: 40px;
+  box-shadow: var(--shadow-resting);
+  color: var(--text-secondary);
+  pointer-events: none;
+  transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  place-items: center;
+  margin-top: -20px;
+  display: grid;
+  position: absolute;
+  top: 50%;
+}
+
+.resizable-panels-module__pcaq3G__restore[data-side="before"] {
+  transform-origin: 0;
+  left: 5px;
+}
+
+.resizable-panels-module__pcaq3G__restore[data-side="after"] {
+  transform-origin: 100%;
+  right: 5px;
+}
+
+.resizable-panels-module__pcaq3G__handle[data-collapsed]:before {
+  inset: 0 -30px;
+}
+
+.resizable-panels-module__pcaq3G__handle[data-collapsed="before"]:before {
+  left: 0;
+}
+
+.resizable-panels-module__pcaq3G__handle[data-collapsed="after"]:before {
+  right: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resizable-panels-module__pcaq3G__handle, .resizable-panels-module__pcaq3G__grip, .resizable-panels-module__pcaq3G__restore {
+    transition: none;
+  }
+}
+
+/*# sourceMappingURL=apps_studio_components_arc_resizable-panels_resizable-panels_module_css_bad6b30c._.single.css.map*/

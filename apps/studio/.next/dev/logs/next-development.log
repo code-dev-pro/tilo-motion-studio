@@ -1,0 +1,7 @@
+[00:00:01.181] Server  LOG      ✓ Ready in 801ms
+[00:00:06.205] Server  LOG      ○ Compiling / ...
+[00:00:22.015] Browser WARN    Note: Some companies are required to obtain a license to use Remotion. See: https://remotion.dev/license
+Pass the `acknowledgeRemotionLicense` prop to `<Player />` function to make this message disappear.
+[00:05:08.069] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:05:14.223] Browser WARN    Note: Some companies are required to obtain a license to use Remotion. See: https://remotion.dev/license
+Pass the `acknowledgeRemotionLicense` prop to `<Player />` function to make this message disappear.

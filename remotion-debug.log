@@ -1,0 +1,51 @@
+
+> tilo-motion-studio@0.1.0 render /Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio
+> tsx src/cli.ts render --scenario fixture --format landscape
+
+Could not extract frame from compositor Error: Can only download URLs starting with http:// or https://, got "file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/output/fixture/capture.webm"
+    at getClient (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1131:9)
+    at file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1135:20
+    at new Promise (<anonymous>)
+    at readFileWithoutRedirect (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1134:10)
+    at readFile (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1153:39)
+    at file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1256:5
+    at new Promise (<anonymous>)
+    at downloadFileWithoutRetries (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1215:10)
+    at downloadFile (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1321:23)
+    at downloadAsset (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:16597:24)
+[http://localhost:3001/proxy?src=file%3A%2F%2F%2FUsers%2Flaurentheneman%2FDropbox%2Ftilo-motion-studio%2Ftilo-motion-studio%2Foutput%2Ffixture%2Fcapture.webm&time=0&transparent=false&toneMapped=true] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+SymbolicateableError: Can only download URLs starting with http:// or https://, got "file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/output/fixture/capture.webm"
+    at getClient (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1131:9)
+    at file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1135:20
+    at new Promise (<anonymous>)
+    at readFileWithoutRedirect (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1134:10)
+    at readFile (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1153:39)
+    at file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1256:5
+    at new Promise (<anonymous>)
+    at downloadFileWithoutRetries (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1215:10)
+    at downloadFile (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1321:23)
+    at downloadAsset (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:16597:24)
+    at getClient (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1131:9)
+    at file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1135:20
+    at new Promise (<anonymous>)
+    at readFileWithoutRedirect (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1134:10)
+    at readFile (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1153:39)
+    at file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1256:5
+    at new Promise (<anonymous>)
+    at downloadFileWithoutRetries (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1215:10)
+    at downloadFile (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:1321:23)
+    at downloadAsset (file:///Users/laurentheneman/Dropbox/tilo-motion-studio/tilo-motion-studio/node_modules/.pnpm/@remotion+renderer@4.0.535_react-dom@19.3.0_react@19.3.0__react@19.3.0/node_modules/@remotion/renderer/dist/esm/index.mjs:16597:24)
+    at execute (http://localhost:3001/bundle.js:36369:21) {
+  stackFrame: [
+    {
+      columnNumber: 20,
+      fileName: 'http://localhost:3001/bundle.js',
+      functionName: 'execute',
+      lineNumber: 36368
+    }
+  ],
+  delayRenderCall: null,
+  frame: 0,
+  chunk: null
+}
+ ELIFECYCLE  Command failed with exit code 1.

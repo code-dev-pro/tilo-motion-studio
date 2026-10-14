@@ -1,0 +1,243 @@
+/* [project]/apps/studio/components/arc/select/select.module.css [app-client] (css) */
+.select-module__aXDxJa__field {
+  gap: var(--space-2);
+  min-width: 0;
+  display: grid;
+}
+
+.select-module__aXDxJa__field label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.select-module__aXDxJa__trigger {
+  box-sizing: border-box;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-height-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  display: flex;
+  position: relative;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .select-module__aXDxJa__trigger:hover:not([data-disabled]) {
+    border-color: var(--border-strong);
+    background: var(--surface-muted);
+  }
+}
+
+.select-module__aXDxJa__trigger:active:not([data-disabled]), .select-module__aXDxJa__trigger[data-state="open"] {
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
+}
+
+.select-module__aXDxJa__trigger:focus-visible {
+  border-color: var(--border-strong);
+}
+
+.select-module__aXDxJa__trigger[data-disabled] {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.select-module__aXDxJa__valueText {
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  display: grid;
+}
+
+.select-module__aXDxJa__valueText > span {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  grid-area: 1 / 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.select-module__aXDxJa__valueText > [data-placeholder] {
+  color: var(--text-muted);
+}
+
+.select-module__aXDxJa__srOnly {
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  position: absolute;
+  overflow: hidden;
+}
+
+.select-module__aXDxJa__chevron {
+  color: var(--text-muted);
+  transition: transform var(--duration-spring) var(--ease-spring), color var(--duration-fast) var(--ease-standard);
+  flex: none;
+  display: inline-flex;
+}
+
+.select-module__aXDxJa__trigger[data-state="open"] .select-module__aXDxJa__chevron {
+  transform: rotate(180deg);
+}
+
+.select-module__aXDxJa__hint {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.select-module__aXDxJa__content {
+  --menu-x: 0px;
+  --menu-y: -6px;
+  box-sizing: border-box;
+  z-index: 1000;
+  width: var(--radix-select-trigger-width);
+  min-width: var(--radix-select-trigger-width);
+  max-width: min(24rem, 100vw - 20px);
+  max-height: min(320px, var(--radix-select-content-available-height));
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius-control)  + 2px);
+  background: var(--surface-raised);
+  color: var(--foreground);
+  box-shadow: var(--shadow-floating);
+  transform-origin: var(--radix-select-content-transform-origin);
+  animation: select-module__aXDxJa__select-in var(--duration-standard) var(--ease-enter) both;
+  padding: 6px;
+  overflow: hidden;
+}
+
+.select-module__aXDxJa__content[data-side="top"] {
+  --menu-y: 6px;
+}
+
+.select-module__aXDxJa__content[data-side="left"] {
+  --menu-x: 6px;
+  --menu-y: 0px;
+}
+
+.select-module__aXDxJa__content[data-side="right"] {
+  --menu-x: -6px;
+  --menu-y: 0px;
+}
+
+.select-module__aXDxJa__content[data-state="closed"] {
+  animation: select-module__aXDxJa__select-out var(--duration-instant) var(--ease-standard) both;
+}
+
+.select-module__aXDxJa__viewport {
+  padding: 2px 0;
+}
+
+.select-module__aXDxJa__item {
+  border-radius: calc(var(--radius-control)  - 4px);
+  min-height: 36px;
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard);
+  outline: none;
+  align-items: center;
+  padding: 0 34px 0 11px;
+  display: flex;
+  position: relative;
+}
+
+.select-module__aXDxJa__item[data-highlighted] {
+  background: var(--surface-muted);
+}
+
+.select-module__aXDxJa__item[data-disabled] {
+  opacity: .45;
+}
+
+.select-module__aXDxJa__indicator {
+  color: var(--foreground);
+  animation: select-module__aXDxJa__indicator-in var(--duration-standard) var(--ease-enter) 40ms both;
+  align-items: center;
+  display: inline-flex;
+  position: absolute;
+  right: 10px;
+}
+
+.select-module__aXDxJa__scrollButton {
+  height: 28px;
+  color: var(--text-muted);
+  place-items: center;
+  display: grid;
+}
+
+@keyframes select-module__aXDxJa__select-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--menu-x), var(--menu-y)) scale(.97);
+  }
+}
+
+@keyframes select-module__aXDxJa__select-out {
+  to {
+    opacity: 0;
+    transform: translate(calc(var(--menu-x) / 2), calc(var(--menu-y) / 2)) scale(.98);
+  }
+}
+
+@keyframes select-module__aXDxJa__indicator-in {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+    transform: scale(.6);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .select-module__aXDxJa__content {
+    background: var(--surface-raised);
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .select-module__aXDxJa__trigger, .select-module__aXDxJa__chevron, .select-module__aXDxJa__item {
+    transition: none;
+  }
+
+  .select-module__aXDxJa__content {
+    animation: select-module__aXDxJa__select-fade var(--duration-instant) var(--ease-standard) both;
+  }
+
+  .select-module__aXDxJa__content[data-state="closed"] {
+    animation: select-module__aXDxJa__select-fade-out var(--duration-instant) var(--ease-standard) both;
+  }
+
+  .select-module__aXDxJa__indicator {
+    animation: none;
+  }
+}
+
+@keyframes select-module__aXDxJa__select-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes select-module__aXDxJa__select-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/*# sourceMappingURL=apps_studio_components_arc_select_select_module_css_bad6b30c._.single.css.map*/
