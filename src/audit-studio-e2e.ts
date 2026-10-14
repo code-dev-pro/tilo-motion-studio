@@ -1,0 +1,75 @@
+import {chromium} from "playwright";
+import {spawn,type ChildProcess} from "node:child_process";
+import {mkdtemp,mkdir,readFile,rm,writeFile} from "node:fs/promises";
+import {tmpdir} from "node:os";
+import {join,resolve} from "node:path";
+import {randomUUID} from "node:crypto";
+import {setTimeout as sleep} from "node:timers/promises";
+import {defaultEditorSettings} from "./editor";
+const root=resolve(".");
+const output=join(root,"output");
+const base="http://127.0.0.1:3333";
+const id="audit-"+randomUUID().slice(0,8);
+const duplicate=id+"-copy";
+const dirs=[join(output,id),join(output,duplicate)];
+const assert=(condition:unknown,message:string):asserts condition=>{if(!condition)throw Error(message)};
+let server:ChildProcess|undefined;
+async function waitForServer(){
+ for(let i=0;i<90;i++){if(server?.exitCode!==null&&server?.exitCode!==undefined)throw Error("Studio server exited");
+  try{const r=await fetch(base+"/api/recordings");if(r.ok)return}catch{}
+  await sleep(500)}
+ throw Error("Studio did not start within 45 seconds");
+}
+async function main(){
+ await mkdir(dirs[0],{recursive:true});
+ const manifest={scenario:id,duration:12,viewport:{width:1600,height:900},source:"capture.webm",events:"events.json",url:"http://localhost:3000"};
+ await Promise.all([
+  writeFile(join(dirs[0],"manifest.json"),JSON.stringify(manifest)),
+  writeFile(join(dirs[0],"events.json"),JSON.stringify([{t:1,type:"click",x:200,y:100}])),
+  writeFile(join(dirs[0],"editor.json"),JSON.stringify(defaultEditorSettings())),
+  writeFile(join(dirs[0],"scenario.json"),JSON.stringify({id,title:"Audit fixture",viewport:manifest.viewport,actions:[],video:{duration:12,fps:30,intro:"Intro",outro:"Outro",zoom:1}})),
+  writeFile(join(dirs[0],"capture.webm"),"")
+ ]);
+ server=spawn("pnpm",["--filter","@tilo/studio","start"],{cwd:root,stdio:"pipe",env:{...process.env,NODE_ENV:"production"}});
+ let stderr="";server.stderr?.on("data",chunk=>{stderr=(stderr+chunk.toString()).slice(-2000)});
+ await waitForServer();
+ const get=async(path:string)=>fetch(base+path);
+ const list=await (await get("/api/recordings")).json() as {recordings:{id:string}[]};
+ assert(list.recordings.some(r=>r.id===id),"Fixture missing from project library");
+ const detail=await get("/api/recordings/"+id);assert(detail.ok,"Project detail not readable");
+ const missing=await fetch(base+"/api/recordings/"+id+"/manage",{method:"DELETE"});
+ assert(missing.status===400,"Delete must reject missing confirmation");
+ const collision=await fetch(base+"/api/recordings/"+id+"/manage",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})});
+ assert(collision.status===400,"Duplicate must reject same name");
+ const copy=await fetch(base+"/api/recordings/"+id+"/manage",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id:duplicate})});
+ assert(copy.status===201,"Project duplicate failed: "+await copy.text());
+ const copied=JSON.parse(await readFile(join(dirs[1],"manifest.json"),"utf8")) as {scenario:string};
+ assert(copied.scenario===duplicate,"Duplicated manifest identifier not updated");
+ const browser=await chromium.launch({headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:1440,height:900}});
+  const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
+  await page.goto(base,{waitUntil:"domcontentloaded"});
+  await page.getByRole("button",{name:new RegExp(id+"$")}).first().click();
+  await page.locator(".timeline .ruler").waitFor();
+  const ruler=page.locator(".timeline .ruler"),bounds=await ruler.boundingBox();
+  assert(bounds,"Ruler is not visible");
+  await page.mouse.move(bounds.x+bounds.width*.25,bounds.y+bounds.height/2);
+  await page.mouse.down();await page.mouse.move(bounds.x+bounds.width*.5,bounds.y+bounds.height/2,{steps:6});await page.mouse.up();
+  const transport=await page.locator(".transport .muted").innerText();
+  assert(/\/ 12\.00 s/.test(transport),"Transport duration incorrect: "+transport);
+  const playhead=page.getByRole("button",{name:"Déplacer la tête de lecture"});
+  assert(await playhead.isVisible(),"Draggable playhead missing");
+  assert(errors.length===0,"Studio page errors: "+errors.join("; "));
+  console.log("E2E UI: project load, ruler scrub, playhead visible — PASS");
+ }finally{await browser.close()}
+ const deleted=await fetch(base+"/api/recordings/"+duplicate+"/manage",{method:"DELETE",headers:{"x-confirm-project-delete":duplicate}});
+ assert(deleted.ok,"Delete of duplicate failed");
+ const stillExists=await get("/api/recordings/"+id);
+ assert(stillExists.ok,"Deleting duplicate damaged original project");
+ console.log("E2E API: list, detail, duplicate, protected delete, original preservation — PASS");
+}
+main().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{
+ if(server){server.kill("SIGTERM");await sleep(300)}
+ for(const dir of dirs)await rm(dir,{recursive:true,force:true}).catch(()=>{});
+});
