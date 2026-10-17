@@ -12,7 +12,7 @@ export const recorderInitScript = String.raw`
  function send(type,e) {
   const binding=w.__tiloRecordEvent;
   if(typeof binding!=="function"){stats.failed++;return}
-  const payload={type,x:e.clientX,y:e.clientY};
+  const payload={type,x:e.clientX,y:e.clientY,epochMs:performance.timeOrigin+e.timeStamp};
   if(type==="scroll")payload.deltaY=e.deltaY;
   Promise.resolve(binding(payload)).then(()=>{stats.delivered++},()=>{stats.failed++});
  }
