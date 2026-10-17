@@ -22,10 +22,14 @@ export function AudioInspector({recording,duration,tracks,onChange,mixer,onMixer
   try{
    if(!recording)throw Error("Sélectionne une capture avant d'ajouter un son.");
    if(tracks.length>=32)throw Error("Limite de 32 pistes atteinte.");
+   if(file.size>30*1024*1024)throw Error("Fichier audio trop volumineux (30 Mo maximum).");
    const form=new FormData();form.set("file",file);
    const response=await fetch("/api/audio/"+encodeURIComponent(recording),{method:"POST",body:form});
-   const data=await response.json();
-   if(!response.ok)throw Error(data.error||"Import impossible");
+   const body=await response.text();
+   let data:{error?:string;url?:string;file?:string};
+   try{data=JSON.parse(body)}catch{throw Error(response.status===413?"La requête audio a été refusée avant le traitement (HTTP 413). Vérifier la limite du serveur Next.js.":"Réponse invalide du serveur audio (HTTP "+response.status+").")}
+   if(!response.ok)throw Error(data.error||"Import impossible (HTTP "+response.status+")");
+   if(!data.url||!data.file)throw Error("Réponse audio incomplète");
    const audio=new window.Audio(data.url);
    const measured=await new Promise<number>(resolve=>{audio.onloadedmetadata=()=>resolve(Number.isFinite(audio.duration)?audio.duration:duration);audio.onerror=()=>resolve(duration)});
    const id="track-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);
