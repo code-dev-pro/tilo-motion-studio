@@ -227,3 +227,6 @@ html,body{background:var(--background);color:var(--foreground)}
  min-height:0;
  flex:1 1 auto;
 }
+
+.studio-toast-action{display:inline-flex;align-items:center;white-space:nowrap;padding:6px 10px;border:1px solid var(--border);border-radius:8px;color:var(--text);background:var(--surface);font-weight:600;text-decoration:none}
+.studio-toast-action:hover{background:var(--surface2);border-color:var(--accent)}
