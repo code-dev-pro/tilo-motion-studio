@@ -96,5 +96,16 @@ try{await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:20000});
   domProbe={before:domBefore,after:bridgeCount,stats:await collectFrameStats()};
   console.log("RECORDER_DOM_PROBE",JSON.stringify(domProbe));
  }catch(e){domProbe={before:domBefore,after:bridgeCount,stats:[],error:String(e)}}
- start=Date.now();console.log("RECORDING_READY",options.id)}
+ await page.evaluate(()=>{
+  const marker=document.createElement("div");
+  marker.id="motion-capture-clock";
+  Object.assign(marker.style,{position:"fixed",top:"0px",left:"0px",width:"48px",height:"48px",backgroundColor:"rgb(255,0,255)",zIndex:"2147483647",pointerEvents:"none"});
+  document.body.appendChild(marker);
+ });
+ await page.waitForTimeout(500);
+ markerRemovedEpoch=await page.evaluate(()=>{
+  document.getElementById("motion-capture-clock")?.remove();
+  return performance.timeOrigin+performance.now();
+ });
+ start=markerRemovedEpoch;console.log("RECORDING_READY",options.id)}
 catch(e){console.error("RECORDING_FAILED",e);await browser.close();process.exit(1)}
