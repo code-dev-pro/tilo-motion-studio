@@ -26,12 +26,19 @@ await context.exposeBinding("__tiloRecordEvent",async(source,raw:unknown)=>{
  bridgeCount++;
  const sourceUrl=source.frame.url();sourceCounts[sourceUrl]=(sourceCounts[sourceUrl]||0)+1;
  if(raw&&typeof raw==="object"&&(raw as {probe?:boolean}).probe)return;
- const ev=normalizeRecorderEvent(raw,{width:options.width,height:options.height});
- if(!start||!ev)return;
- if(source.frame!==page.mainFrame()){
-  try{const frameElement=await source.frame.frameElement();const rect=await frameElement.boundingBox();if(!rect)return;ev.x+=rect.x;ev.y+=rect.y}catch{return}
+ if(!start)return;
+ let adjusted=raw;
+ if(source.frame!==page.mainFrame()&&raw&&typeof raw==="object"){
+  try{
+   const rect=await (await source.frame.frameElement()).boundingBox();
+   const data=raw as {x?:unknown;y?:unknown};
+   if(!rect||typeof data.x!=="number"||typeof data.y!=="number")return;
+   adjusted={...data,x:data.x+rect.x,y:data.y+rect.y};
+  }catch{return}
  }
- events.push({...ev,x:Math.max(0,Math.min(options.width,ev.x)),y:Math.max(0,Math.min(options.height,ev.y)),t:recorderEventTime(raw,start,Date.now())});
+ const ev=normalizeRecorderEvent(adjusted,{width:options.width,height:options.height});
+ if(!ev)return;
+ events.push({...ev,t:recorderEventTime(raw,start,Date.now())});
 });
 await context.addInitScript({content:recorderInitScript});
 async function collectFrameStats(){return Promise.all(page.frames().map(async frame=>({url:frame.url(),stats:await frame.evaluate(()=>({installed:!!(window as typeof window & {__tiloRecorderActive?:boolean}).__tiloRecorderActive,counts:(window as typeof window & {__tiloRecorderStats?:Record<string,number>}).__tiloRecorderStats??null})).catch(()=>null)})))}
