@@ -10,7 +10,7 @@ import {defaultEnvironment} from "./environment";
 import {backgroundCSS,defaultBackground} from "./backgrounds";
 import {CursorOverlay} from "./cursor-overlay";
 import {defaultCursorSettings} from "./cursor-settings";
-import {mixedAudioGain} from "./audio-editing";
+import {mixedAudioGain,audioFadeEnvelope} from "./audio-editing";
 import {defaultAudioMixer} from "./audio-mixer";
 import {spatialPosition} from "./spatial-handles";
 import {spatialPoints} from "./spatial-path";
@@ -47,7 +47,7 @@ export function Promo({src,title,intro,outro,zoom,events=[],camera=[],viewport={
    {settings?.clips?.length?settings.clips.map(clip=><Sequence key={clip.id} from={Math.round(clip.start*fps)} durationInFrames={Math.max(1,Math.round((clip.sourceOut-clip.sourceIn)*fps))} layout="none">{preview?<Video src={src} muted playsInline startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} startFrom={Math.round(clip.sourceIn*fps)} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>}</Sequence>):(preview?<Video src={src} muted playsInline style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>:<OffthreadVideo src={src} style={{width:"100%",height:"100%",objectFit:scene?.fit??"contain"}}/>)} 
    <CursorOverlay events={events} time={sourceTime??t} width={fw} height={fh} viewport={viewport} fit={scene?.fit??"contain"} settings={{...(settings?.cursorSettings??defaultCursorSettings()),visible:settings?.cursor!==false&&(settings?.cursorSettings?.visible??true)}}/>
   </div>
-  {settings?.audioTracks?.filter(track=>!track.muted).map(track=><Sequence key={track.id} from={Math.round(track.start*fps)} durationInFrames={Math.max(1,Math.round(track.duration*fps))} layout="none"><Audio src={src.slice(0,src.lastIndexOf("/")+1)+track.file} startFrom={Math.round(track.trimStart*fps)} loop={track.loop} volume={frame=>{const seconds=frame/fps;const fadeIn=track.fadeIn>0?Math.min(1,seconds/track.fadeIn):1;const fadeOut=track.fadeOut>0?Math.min(1,(track.duration-seconds)/track.fadeOut):1;return Math.max(0,Math.min(fadeIn,fadeOut))*mixedAudioGain(track,settings.audioTracks,track.start+seconds,settings.audioMixer??defaultAudioMixer())}}/></Sequence>)}
+  {settings?.audioTracks?.filter(track=>!track.muted).map(track=><Sequence key={track.id} from={Math.round(track.start*fps)} durationInFrames={Math.max(1,Math.round(track.duration*fps))} layout="none"><Audio src={src.slice(0,src.lastIndexOf("/")+1)+track.file} startFrom={Math.round(track.trimStart*fps)} loop={track.loop} loopVolumeCurveBehavior="extend" volume={frame=>{const seconds=frame/fps;return audioFadeEnvelope(seconds,track.duration,track.fadeIn,track.fadeOut)*mixedAudioGain(track,settings.audioTracks,track.start+seconds,settings.audioMixer??defaultAudioMixer())}}/></Sequence>)}
   <LightingOverlay settings={environment} width={width} height={height} time={t}/>
   {environment.vignette>0&&<AbsoluteFill style={{pointerEvents:"none",background:`radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,${environment.vignette}) 100%)`}}/>}
   {(opening||closing)&&<AbsoluteFill style={{background:"linear-gradient(0deg,#071021e8,#07102190)",alignItems:"center",justifyContent:"center",textAlign:"center",padding:48,opacity:overlayOpacity}}>
