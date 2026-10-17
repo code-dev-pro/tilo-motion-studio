@@ -22,10 +22,28 @@ export function AudioInspector({recording,duration,tracks,onChange,mixer,onMixer
   try{
    if(!recording)throw Error("Sélectionne une capture avant d'ajouter un son.");
    if(tracks.length>=32)throw Error("Limite de 32 pistes atteinte.");
-   const form=new FormData();form.set("file",file);
-   const response=await fetch("/api/audio/"+encodeURIComponent(recording),{method:"POST",body:form});
-   const data=await response.json();
-   if(!response.ok)throw Error(data.error||"Import impossible");
+   if(file.size>30*1024*1024)throw Error("Fichier audio trop volumineux (30 Mo maximum).");
+   let data:{error?:string;url?:string;file?:string};
+   if(file.size>8*1024*1024){
+    const ext=file.name.split(".").pop()?.toLowerCase();
+    if(!ext||!["mp3","wav","m4a","ogg","webm"].includes(ext))throw Error("Format audio non pris en charge.");
+    const name="audio-"+crypto.randomUUID().replaceAll("-","")+"."+ext;
+    const chunkSize=4*1024*1024,total=Math.ceil(file.size/chunkSize);
+    data={};
+    for(let i=0;i<total;i++){
+     const response=await fetch("/api/audio/"+encodeURIComponent(recording)+"/chunk",{method:"PUT",headers:{"Content-Type":"application/octet-stream","x-audio-name":name,"x-chunk-index":String(i),"x-chunk-total":String(total)},body:file.slice(i*chunkSize,Math.min(file.size,(i+1)*chunkSize))});
+     const result=await response.json().catch(()=>({error:"Réponse invalide du serveur"}));
+     if(!response.ok)throw Error(result.error||"Échec de l’import audio (HTTP "+response.status+")");
+     if(result.complete)data=result;
+    }
+   }else{
+    const form=new FormData();form.set("file",file);
+    const response=await fetch("/api/audio/"+encodeURIComponent(recording),{method:"POST",body:form});
+    const body=await response.text();
+    try{data=JSON.parse(body)}catch{throw Error(response.status===413?"La requête audio a été refusée (HTTP 413).":"Réponse invalide du serveur audio (HTTP "+response.status+").")}
+    if(!response.ok)throw Error(data.error||"Import impossible (HTTP "+response.status+")");
+   }
+   if(!data.url||!data.file)throw Error("Réponse audio incomplète");
    const audio=new window.Audio(data.url);
    const measured=await new Promise<number>(resolve=>{audio.onloadedmetadata=()=>resolve(Number.isFinite(audio.duration)?audio.duration:duration);audio.onerror=()=>resolve(duration)});
    const id="track-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);

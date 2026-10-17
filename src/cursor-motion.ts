@@ -3,11 +3,10 @@ export type CursorPoint={x:number;y:number;click:boolean;lastEventTime:number};
 export type CursorMotionOptions={lag:number;smoothing:number;maxGap:number};
 export const cursorMotionPresets:Record<"precise"|"subtle"|"smooth"|"fluid",CursorMotionOptions>={
  precise:{lag:0,smoothing:0,maxGap:.35},
- subtle:{lag:.015,smoothing:.025,maxGap:.45},
- smooth:{lag:.035,smoothing:.055,maxGap:.55},
- fluid:{lag:.06,smoothing:.09,maxGap:.65}
+ subtle:{lag:0,smoothing:0,maxGap:.45},
+ smooth:{lag:0,smoothing:0,maxGap:.55},
+ fluid:{lag:0,smoothing:0,maxGap:.65}
 };
-const ease=(u:number)=>{const t=Math.max(0,Math.min(1,u));return t*t*(3-2*t)};
 export function cursorPosition(events:MotionEvent[],time:number,options:CursorMotionOptions):CursorPoint|null{
  const points=events.filter(e=>["move","drag","click"].includes(e.type)&&Number.isFinite(e.t)&&Number.isFinite(e.x)&&Number.isFinite(e.y)).sort((a,b)=>a.t-b.t);
  if(!points.length)return null;
@@ -20,7 +19,7 @@ export function cursorPosition(events:MotionEvent[],time:number,options:CursorMo
  const before=points[Math.max(0,hi-1)],after=points[Math.min(points.length-1,hi)];
  let x=before.x,y=before.y;
  if(after!==before&&after.t>before.t&&after.t-before.t<=options.maxGap){
-  const u=recentDrag?Math.max(0,Math.min(1,(t-before.t)/(after.t-before.t))):ease((t-before.t)/(after.t-before.t));x=before.x+(after.x-before.x)*u;y=before.y+(after.y-before.y)*u;
+  const u=Math.max(0,Math.min(1,(t-before.t)/(after.t-before.t)));x=before.x+(after.x-before.x)*u;y=before.y+(after.y-before.y)*u;
  }else if(t<=points[0].t){x=points[0].x;y=points[0].y}
  if(options.smoothing>0&&!recentDrag){
   const near=points.filter(p=>Math.abs(p.t-t)<=options.smoothing);
