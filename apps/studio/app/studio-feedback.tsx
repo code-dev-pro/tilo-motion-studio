@@ -8,10 +8,14 @@ export function useStudioNotices(){
  const dismiss=(id:number)=>setNotices(prev=>prev.filter(n=>n.id!==id));
  return {notices,notify,dismiss};
 }
-export function StudioToasts({notices,dismiss}:{notices:Notice[];dismiss:(id:number)=>void}){
- useEffect(()=>{if(!notices.length)return;const timers=notices.map(n=>setTimeout(()=>dismiss(n.id),3000));return ()=>timers.forEach(clearTimeout)},[notices]);
- return <div className="studio-toast-stack" role="region" aria-label="Notifications">{notices.map(n=><div className="studio-toast" data-kind={n.kind} key={n.id} role={n.kind==="error"?"alert":"status"}>{n.kind==="error"?<AlertCircle size={17}/>:<CheckCircle2 size={17}/>}<span>{n.message}</span>{n.action&&<a className="studio-toast-action" href={n.action.href} target="_blank" rel="noopener noreferrer">{n.action.label}</a>}<button aria-label="Fermer la notification" onClick={()=>dismiss(n.id)}><X size={15}/></button></div>)}</div>;
+function ToastItem({notice,dismiss}:{notice:Notice;dismiss:(id:number)=>void}){
+ useEffect(()=>{const timer=setTimeout(()=>dismiss(notice.id),3000);return ()=>clearTimeout(timer)},[notice.id,dismiss]);
+ return <div className="studio-toast" data-kind={notice.kind} role={notice.kind==="error"?"alert":"status"}>{notice.kind==="error"?<AlertCircle size={17}/>:<CheckCircle2 size={17}/>}<span>{notice.message}</span>{notice.action&&<a className="studio-toast-action" href={notice.action.href} target="_blank" rel="noopener noreferrer">{notice.action.label}</a>}<button aria-label="Fermer la notification" onClick={()=>dismiss(notice.id)}><X size={15}/></button></div>;
 }
+export function StudioToasts({notices,dismiss}:{notices:Notice[];dismiss:(id:number)=>void}){
+ return <div className="studio-toast-stack" role="region" aria-label="Notifications">{notices.map(n=><ToastItem notice={n} dismiss={dismiss} key={n.id}/>)}</div>;
+}
+
 type DialogProps={kind:"duplicate"|"delete";name:string;initialName:string;busy:boolean;onCancel:()=>void;onConfirm:(value:string)=>void};
 export function ProjectDialog({kind,name,initialName,busy,onCancel,onConfirm}:DialogProps){
  const [value,setValue]=useState(initialName);
