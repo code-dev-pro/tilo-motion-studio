@@ -1,15 +1,16 @@
 "use client";
 import {useEffect,useState} from "react";
 import {CheckCircle2,AlertCircle,X} from "lucide-react";
-type Notice={id:number;message:string;kind:"success"|"error"|"info"};
+type Notice={id:number;message:string;kind:"success"|"error"|"info";action?:{label:string;href:string}};
 export function useStudioNotices(){
  const [notices,setNotices]=useState<Notice[]>([]);
- const notify=(message:string,kind:Notice["kind"]="info")=>setNotices(prev=>[...prev.slice(-3),{id:Date.now()+Math.random(),message,kind}]);
+ const notify=(message:string,kind:Notice["kind"]="info",action?:Notice["action"])=>setNotices(prev=>[...prev.slice(-2),{id:Date.now()+Math.random(),message,kind,action}]);
  const dismiss=(id:number)=>setNotices(prev=>prev.filter(n=>n.id!==id));
  return {notices,notify,dismiss};
 }
 export function StudioToasts({notices,dismiss}:{notices:Notice[];dismiss:(id:number)=>void}){
- return <div className="studio-toast-stack" role="region" aria-label="Notifications">{notices.map(n=><div className="studio-toast" data-kind={n.kind} key={n.id} role={n.kind==="error"?"alert":"status"}>{n.kind==="error"?<AlertCircle size={17}/>:<CheckCircle2 size={17}/>}<span>{n.message}</span><button aria-label="Fermer la notification" onClick={()=>dismiss(n.id)}><X size={15}/></button></div>)}</div>;
+ useEffect(()=>{if(!notices.length)return;const timers=notices.map(n=>setTimeout(()=>dismiss(n.id),3000));return ()=>timers.forEach(clearTimeout)},[notices]);
+ return <div className="studio-toast-stack" role="region" aria-label="Notifications">{notices.map(n=><div className="studio-toast" data-kind={n.kind} key={n.id} role={n.kind==="error"?"alert":"status"}>{n.kind==="error"?<AlertCircle size={17}/>:<CheckCircle2 size={17}/>}<span>{n.message}</span>{n.action&&<a className="studio-toast-action" href={n.action.href} target="_blank" rel="noopener noreferrer">{n.action.label}</a>}<button aria-label="Fermer la notification" onClick={()=>dismiss(n.id)}><X size={15}/></button></div>)}</div>;
 }
 type DialogProps={kind:"duplicate"|"delete";name:string;initialName:string;busy:boolean;onCancel:()=>void;onConfirm:(value:string)=>void};
 export function ProjectDialog({kind,name,initialName,busy,onCancel,onConfirm}:DialogProps){
