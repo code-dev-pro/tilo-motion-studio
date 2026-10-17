@@ -2,17 +2,18 @@ import React from "react";
 import type {CursorSettings} from "./cursor-settings";
 import type {MotionEvent} from "./cinematic";
 import {cursorPosition,cursorMotionPresets} from "./cursor-motion";
+import {mapVideoPoint} from "./cursor-coordinate-map";
 export function cursorAt(events:MotionEvent[],time:number,mode:CursorSettings["movement"]){
  return cursorPosition(events,time,cursorMotionPresets[mode]);
 }
-export function CursorOverlay({events,time,width,height,viewport,settings}:{events:MotionEvent[];time:number;width:number;height:number;viewport:{width:number;height:number};settings:CursorSettings}){
+export function CursorOverlay({events,time,width,height,viewport,settings,fit="contain"}:{events:MotionEvent[];time:number;width:number;height:number;viewport:{width:number;height:number};settings:CursorSettings;fit?:"contain"|"cover"}){
  if(!settings.visible)return null;
  const p=cursorAt(events,time,settings.movement);if(!p)return null;
  const last=p.lastEventTime;
  const idle=settings.hideWhenIdle&&time-last>1.2;
  if(idle)return null;
  const size=28*settings.size;
- const x=p.x*width/viewport.width,y=p.y*height/viewport.height;
+ const {x,y}=mapVideoPoint(p.x,p.y,viewport,{width,height},fit);
  const click=events.filter(e=>e.type==="click"&&e.t<=time).at(-1);
  const dt=click?time-click.t:Infinity,active=dt>=0&&dt<.55;
  const effect=settings.clickEffect;
