@@ -7,7 +7,6 @@ export const cursorMotionPresets:Record<"precise"|"subtle"|"smooth"|"fluid",Curs
  smooth:{lag:0,smoothing:0,maxGap:.55},
  fluid:{lag:0,smoothing:0,maxGap:.65}
 };
-const ease=(u:number)=>{const t=Math.max(0,Math.min(1,u));return t*t*(3-2*t)};
 export function cursorPosition(events:MotionEvent[],time:number,options:CursorMotionOptions):CursorPoint|null{
  const points=events.filter(e=>["move","drag","click"].includes(e.type)&&Number.isFinite(e.t)&&Number.isFinite(e.x)&&Number.isFinite(e.y)).sort((a,b)=>a.t-b.t);
  if(!points.length)return null;
