@@ -7,6 +7,7 @@ import {recorderInitScript} from "./recorder-init-script";
 import type {MotionEvent} from "./cinematic";
 import {normalizeRecorderEvent,recordingEventSummary} from "./recorder-events";
 import {recorderEventTime} from "./recorder-event-time";
+import {detectVideoSyncMarker,alignEventsToVideo} from "./video-sync";
 import {defineScenario} from "./core";
 import {recoverRecordedVideo,verifyRecordingVideo,writeJsonAtomic} from "./recording-recovery";
 const options=recordingOptions.parse(JSON.parse(process.env.TILO_RECORDING_OPTIONS||"{}"));
@@ -17,6 +18,7 @@ const context=await browser.newContext({viewport:{width:options.width,height:opt
 const page=await context.newPage();
 const events:MotionEvent[]=[];
 let start=0,stopping=false,bridgeCount=0;
+let markerEpochMs:number|null=null;
 let finalization:Promise<void>|null=null;
 const sourceCounts:Record<string,number>={};const pageUrls:string[]=[];
 context.on("page",p=>{pageUrls.push(p.url());p.on("framenavigated",f=>{if(f===p.mainFrame())pageUrls.push(f.url())})});
@@ -51,9 +53,12 @@ async function finalizeRecording(){
   if(browser.isConnected())await context.close().catch(e=>console.warn("Context close:",String(e)));
   try{if(video)await copyFile(await video.path(),join(dir,"capture.webm"));else throw Error("Video unavailable")}catch{await recoverRecordedVideo(dir)}
   await verifyRecordingVideo(join(dir,"capture.webm"));
-  await writeJsonAtomic(join(dir,"events.json"),events);
-  const summary=recordingEventSummary(events);
-  await writeJsonAtomic(join(dir,"event-diagnostics.json"),{bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError});
+  let syncOffsetSeconds=0;
+  try{const markerTime=await detectVideoSyncMarker(join(dir,"capture.webm"));if(markerTime!==null&&markerEpochMs!==null)syncOffsetSeconds=markerTime-(markerEpochMs-start)/1000}catch(e){console.warn("SYNC_WARNING",String(e))}
+  const alignedEvents=alignEventsToVideo(events,syncOffsetSeconds);
+  await writeJsonAtomic(join(dir,"events.json"),alignedEvents);
+  const summary=recordingEventSummary(alignedEvents);
+  await writeJsonAtomic(join(dir,"event-diagnostics.json"),{bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError,syncOffsetSeconds});
   console.log("RECORDING_EVENTS",JSON.stringify(summary));
   if(events.length===0)console.warn("RECORDING_WARNING: no pointer events captured. Check that interactions occurred in the Chromium recording window.");
   await writeJsonAtomic(join(dir,"manifest.json"),{scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url});
