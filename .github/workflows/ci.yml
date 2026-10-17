@@ -16,6 +16,10 @@ jobs:
         with:
           node-version: 22
       - run: pnpm install --no-frozen-lockfile
+      - name: Install FFmpeg for clock calibration
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Capture clock integration
+        run: pnpm exec tsx src/audit-capture-clock.ts
       - name: Unit tests
         run: pnpm test
       - name: TypeScript check
