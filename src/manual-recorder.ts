@@ -7,6 +7,7 @@ import {recorderInitScript} from "./recorder-init-script";
 import type {MotionEvent} from "./cinematic";
 import {normalizeRecorderEvent,recordingEventSummary} from "./recorder-events";
 import {recorderEventTime} from "./recorder-event-time";
+import {detectMarkerEnd,videoDuration,alignEvents,trimCapturePreroll} from "./capture-clock";
 import {defineScenario} from "./core";
 import {recoverRecordedVideo,verifyRecordingVideo,writeJsonAtomic} from "./recording-recovery";
 const options=recordingOptions.parse(JSON.parse(process.env.TILO_RECORDING_OPTIONS||"{}"));
@@ -17,6 +18,7 @@ const context=await browser.newContext({viewport:{width:options.width,height:opt
 const page=await context.newPage();
 const events:MotionEvent[]=[];
 let start=0,stopping=false,bridgeCount=0;
+let markerRemovedEpoch:number|null=null;
 let finalization:Promise<void>|null=null;
 const sourceCounts:Record<string,number>={};const pageUrls:string[]=[];
 context.on("page",p=>{pageUrls.push(p.url());p.on("framenavigated",f=>{if(f===p.mainFrame())pageUrls.push(f.url())})});
@@ -24,12 +26,19 @@ await context.exposeBinding("__tiloRecordEvent",async(source,raw:unknown)=>{
  bridgeCount++;
  const sourceUrl=source.frame.url();sourceCounts[sourceUrl]=(sourceCounts[sourceUrl]||0)+1;
  if(raw&&typeof raw==="object"&&(raw as {probe?:boolean}).probe)return;
- const ev=normalizeRecorderEvent(raw,{width:options.width,height:options.height});
- if(!start||!ev)return;
- if(source.frame!==page.mainFrame()){
-  try{const frameElement=await source.frame.frameElement();const rect=await frameElement.boundingBox();if(!rect)return;ev.x+=rect.x;ev.y+=rect.y}catch{return}
+ if(!start)return;
+ let adjusted=raw;
+ if(source.frame!==page.mainFrame()&&raw&&typeof raw==="object"){
+  try{
+   const rect=await (await source.frame.frameElement()).boundingBox();
+   const data=raw as {x?:unknown;y?:unknown};
+   if(!rect||typeof data.x!=="number"||typeof data.y!=="number")return;
+   adjusted={...data,x:data.x+rect.x,y:data.y+rect.y};
+  }catch{return}
  }
- events.push({...ev,x:Math.max(0,Math.min(options.width,ev.x)),y:Math.max(0,Math.min(options.height,ev.y)),t:recorderEventTime(raw,start,Date.now())});
+ const ev=normalizeRecorderEvent(adjusted,{width:options.width,height:options.height});
+ if(!ev)return;
+ events.push({...ev,t:recorderEventTime(raw,start,Date.now())});
 });
 await context.addInitScript({content:recorderInitScript});
 async function collectFrameStats(){return Promise.all(page.frames().map(async frame=>({url:frame.url(),stats:await frame.evaluate(()=>({installed:!!(window as typeof window & {__tiloRecorderActive?:boolean}).__tiloRecorderActive,counts:(window as typeof window & {__tiloRecorderStats?:Record<string,number>}).__tiloRecorderStats??null})).catch(()=>null)})))}
@@ -44,19 +53,39 @@ async function finish(){
  return finalization;
 }
 async function finalizeRecording(){
- const duration=Math.max(1,(Date.now()-start)/1000);
+ let duration=Math.max(1,(Date.now()-start)/1000);
  try{
   try{frameStats=await collectFrameStats()}catch(e){diagnosticsError=String(e)}
   const video=page.video();
   if(browser.isConnected())await context.close().catch(e=>console.warn("Context close:",String(e)));
   try{if(video)await copyFile(await video.path(),join(dir,"capture.webm"));else throw Error("Video unavailable")}catch{await recoverRecordedVideo(dir)}
   await verifyRecordingVideo(join(dir,"capture.webm"));
-  await writeJsonAtomic(join(dir,"events.json"),events);
-  const summary=recordingEventSummary(events);
-  await writeJsonAtomic(join(dir,"event-diagnostics.json"),{bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError});
+  let syncStatus:"calibrated"|"marker-missing"|"ffmpeg-unavailable"="marker-missing";
+  let syncOffsetSeconds=0;
+  try{
+   const path=join(dir,"capture.webm");
+   duration=await videoDuration(path);
+   const markerEnd=await detectMarkerEnd(path);
+   if(markerEnd!==null&&markerRemovedEpoch!==null){
+    try{
+     await trimCapturePreroll(path,markerEnd);
+     duration=await videoDuration(path);
+     syncOffsetSeconds=0;
+     syncStatus="calibrated";
+    }catch(e){
+     syncOffsetSeconds=markerEnd;
+     syncStatus="calibrated";
+     console.warn("CAPTURE_PREROLL_TRIM_WARNING",String(e));
+    }
+   }
+  }catch(e){syncStatus="ffmpeg-unavailable";console.warn("CAPTURE_SYNC_WARNING",String(e))}
+  const alignedEvents=syncStatus==="calibrated"?alignEvents(events,syncOffsetSeconds):events;
+  await writeJsonAtomic(join(dir,"events.json"),alignedEvents);
+  const summary=recordingEventSummary(alignedEvents);
+  await writeJsonAtomic(join(dir,"event-diagnostics.json"),{bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError,syncStatus,syncOffsetSeconds});
   console.log("RECORDING_EVENTS",JSON.stringify(summary));
   if(events.length===0)console.warn("RECORDING_WARNING: no pointer events captured. Check that interactions occurred in the Chromium recording window.");
-  await writeJsonAtomic(join(dir,"manifest.json"),{scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url});
+  await writeJsonAtomic(join(dir,"manifest.json"),{scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url,syncStatus,syncOffsetSeconds});
   const scenario=defineScenario({id:options.id,title:"Screen recording",viewport:{width:options.width,height:options.height},actions:[{type:"wait",ms:0}],video:{duration,fps:30,intro:"Product demo",outro:"Thanks for watching"}});
   await writeJsonAtomic(join(dir,"scenario.json"),scenario);
   await rm(stopFile,{force:true});
@@ -94,5 +123,16 @@ try{await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:20000});
   domProbe={before:domBefore,after:bridgeCount,stats:await collectFrameStats()};
   console.log("RECORDER_DOM_PROBE",JSON.stringify(domProbe));
  }catch(e){domProbe={before:domBefore,after:bridgeCount,stats:[],error:String(e)}}
- start=Date.now();console.log("RECORDING_READY",options.id)}
+ await page.evaluate(()=>{
+  const marker=document.createElement("div");
+  marker.id="motion-capture-clock";
+  Object.assign(marker.style,{position:"fixed",top:"0px",left:"0px",width:"48px",height:"48px",backgroundColor:"rgb(255,0,255)",zIndex:"2147483647",pointerEvents:"none"});
+  document.body.appendChild(marker);
+ });
+ await page.waitForTimeout(500);
+ markerRemovedEpoch=await page.evaluate(()=>{
+  document.getElementById("motion-capture-clock")?.remove();
+  return performance.timeOrigin+performance.now();
+ });
+ start=markerRemovedEpoch;console.log("RECORDING_READY",options.id)}
 catch(e){console.error("RECORDING_FAILED",e);await browser.close();process.exit(1)}

@@ -55,3 +55,12 @@ export function mixedAudioGain(track:AudioTrack,tracks:AudioTrack[],time:number,
  }
  return Math.max(0,Math.min(4,track.volume*mixer.masterVolume*gain));
 }
+
+/** Envelope time is relative to the audio clip, not its trimmed source position. */
+export function audioFadeEnvelope(localTime:number,duration:number,fadeIn:number,fadeOut:number):number{
+ if(!Number.isFinite(localTime)||!Number.isFinite(duration)||duration<=0)return 0;
+ const t=Math.max(0,Math.min(duration,localTime));
+ const inGain=fadeIn>0?Math.min(1,t/fadeIn):1;
+ const outGain=fadeOut>0?Math.min(1,Math.max(0,duration-t)/fadeOut):1;
+ return Math.max(0,Math.min(inGain,outGain));
+}
