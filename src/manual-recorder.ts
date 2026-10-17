@@ -28,7 +28,7 @@ await context.exposeBinding("__tiloRecordEvent",async(source,raw:unknown)=>{
  if(source.frame!==page.mainFrame()){
   try{const frameElement=await source.frame.frameElement();const rect=await frameElement.boundingBox();if(!rect)return;ev.x+=rect.x;ev.y+=rect.y}catch{return}
  }
- events.push({...ev,x:Math.max(0,Math.min(options.width,ev.x)),y:Math.max(0,Math.min(options.height,ev.y)),t:Math.max(0,(Date.now()-start)/1000)});
+ events.push({...ev,x:Math.max(0,Math.min(options.width,ev.x)),y:Math.max(0,Math.min(options.height,ev.y)),t:Math.max(0,((raw&&typeof raw==="object"&&typeof (raw as {epochMs?:unknown}).epochMs==="number"&&Number.isFinite((raw as {epochMs:number}).epochMs))?(raw as {epochMs:number}).epochMs:Date.now())-start)/1000)});
 });
 await context.addInitScript({content:recorderInitScript});
 async function collectFrameStats(){return Promise.all(page.frames().map(async frame=>({url:frame.url(),stats:await frame.evaluate(()=>({installed:!!(window as typeof window & {__tiloRecorderActive?:boolean}).__tiloRecorderActive,counts:(window as typeof window & {__tiloRecorderStats?:Record<string,number>}).__tiloRecorderStats??null})).catch(()=>null)})))}
