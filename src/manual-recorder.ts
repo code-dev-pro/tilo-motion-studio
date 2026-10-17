@@ -46,19 +46,31 @@ async function finish(){
  return finalization;
 }
 async function finalizeRecording(){
- const duration=Math.max(1,(Date.now()-start)/1000);
+ let duration=Math.max(1,(Date.now()-start)/1000);
  try{
   try{frameStats=await collectFrameStats()}catch(e){diagnosticsError=String(e)}
   const video=page.video();
   if(browser.isConnected())await context.close().catch(e=>console.warn("Context close:",String(e)));
   try{if(video)await copyFile(await video.path(),join(dir,"capture.webm"));else throw Error("Video unavailable")}catch{await recoverRecordedVideo(dir)}
   await verifyRecordingVideo(join(dir,"capture.webm"));
-  await writeJsonAtomic(join(dir,"events.json"),events);
-  const summary=recordingEventSummary(events);
-  await writeJsonAtomic(join(dir,"event-diagnostics.json"),{bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError});
+  let syncStatus:"calibrated"|"marker-missing"|"ffmpeg-unavailable"="marker-missing";
+  let syncOffsetSeconds=0;
+  try{
+   const path=join(dir,"capture.webm");
+   duration=await videoDuration(path);
+   const markerEnd=await detectMarkerEnd(path);
+   if(markerEnd!==null&&markerRemovedEpoch!==null){
+    syncOffsetSeconds=markerEnd;
+    syncStatus="calibrated";
+   }
+  }catch(e){syncStatus="ffmpeg-unavailable";console.warn("CAPTURE_SYNC_WARNING",String(e))}
+  const alignedEvents=syncStatus==="calibrated"?alignEvents(events,syncOffsetSeconds):events;
+  await writeJsonAtomic(join(dir,"events.json"),alignedEvents);
+  const summary=recordingEventSummary(alignedEvents);
+  await writeJsonAtomic(join(dir,"event-diagnostics.json"),{bridgeCount,summary,url:options.url,sourceCounts,pageUrls,frameStats,syntheticProbe,domProbe,diagnosticsError,syncStatus,syncOffsetSeconds});
   console.log("RECORDING_EVENTS",JSON.stringify(summary));
   if(events.length===0)console.warn("RECORDING_WARNING: no pointer events captured. Check that interactions occurred in the Chromium recording window.");
-  await writeJsonAtomic(join(dir,"manifest.json"),{scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url});
+  await writeJsonAtomic(join(dir,"manifest.json"),{scenario:options.id,viewport:{width:options.width,height:options.height},source:"capture.webm",events:"events.json",duration,url:options.url,syncStatus,syncOffsetSeconds});
   const scenario=defineScenario({id:options.id,title:"Screen recording",viewport:{width:options.width,height:options.height},actions:[{type:"wait",ms:0}],video:{duration,fps:30,intro:"Product demo",outro:"Thanks for watching"}});
   await writeJsonAtomic(join(dir,"scenario.json"),scenario);
   await rm(stopFile,{force:true});
