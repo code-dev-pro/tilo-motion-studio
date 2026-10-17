@@ -7,7 +7,7 @@ import {recorderInitScript} from "./recorder-init-script";
 import type {MotionEvent} from "./cinematic";
 import {normalizeRecorderEvent,recordingEventSummary} from "./recorder-events";
 import {recorderEventTime} from "./recorder-event-time";
-import {detectMarkerEnd,videoDuration,alignEvents} from "./capture-clock";
+import {detectMarkerEnd,videoDuration,alignEvents,trimCapturePreroll} from "./capture-clock";
 import {defineScenario} from "./core";
 import {recoverRecordedVideo,verifyRecordingVideo,writeJsonAtomic} from "./recording-recovery";
 const options=recordingOptions.parse(JSON.parse(process.env.TILO_RECORDING_OPTIONS||"{}"));
@@ -60,8 +60,16 @@ async function finalizeRecording(){
    duration=await videoDuration(path);
    const markerEnd=await detectMarkerEnd(path);
    if(markerEnd!==null&&markerRemovedEpoch!==null){
-    syncOffsetSeconds=markerEnd;
-    syncStatus="calibrated";
+    try{
+     await trimCapturePreroll(path,markerEnd);
+     duration=await videoDuration(path);
+     syncOffsetSeconds=0;
+     syncStatus="calibrated";
+    }catch(e){
+     syncOffsetSeconds=markerEnd;
+     syncStatus="calibrated";
+     console.warn("CAPTURE_PREROLL_TRIM_WARNING",String(e));
+    }
    }
   }catch(e){syncStatus="ffmpeg-unavailable";console.warn("CAPTURE_SYNC_WARNING",String(e))}
   const alignedEvents=syncStatus==="calibrated"?alignEvents(events,syncOffsetSeconds):events;
