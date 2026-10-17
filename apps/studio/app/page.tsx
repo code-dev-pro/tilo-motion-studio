@@ -57,6 +57,8 @@ export default function Home(){
  const [settings,setSettings]=useState<Settings>(defaults),[format,setFormat]=useState<keyof typeof dimensions>("landscape"),[playhead,setPlayhead]=useState(0),[playing,setPlaying]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState("Prêt");
  const [mediaError,setMediaError]=useState("");
  const [exporting,setExporting]=useState(false);
+ const [lastExport,setLastExport]=useState<{id:string;format:string}|null>(null);
+ const handledExport=useRef<number>(0);
  const {notices,notify,dismiss}=useStudioNotices();
  const [projectDialog,setProjectDialog]=useState<{kind:"duplicate"|"delete";id:string;initialName:string}|null>(null);
  const [paneSizes,setPaneSizes]=useState([21,57,22]);
@@ -91,6 +93,30 @@ export default function Home(){
  }
  async function load(id:string){const r=await fetch("/api/recordings/"+id);if(!r.ok){setMessage("Capture introuvable");return}const d=await r.json() as Detail;setSelected(id);setDetail(d);setMediaError("");const loaded:Settings={...defaults,...d.settings,cursorSettings:d.settings.cursorSettings||defaults.cursorSettings,environment:d.settings.environment||defaults.environment,advancedCamera:d.settings.advancedCamera||defaults.advancedCamera,canvasBackground:d.settings.canvasBackground||defaults.canvasBackground,audioTracks:d.settings.audioTracks||[],audioMixer:d.settings.audioMixer||defaults.audioMixer,animationTracks:d.settings.animationTracks||[],spatialHandles:d.settings.spatialHandles||[],clips:d.settings.clips||[],scene:d.settings.scene||defaults.scene};latestSettings.current=loaded;setSettings(loaded);history.current=createHistory(loaded);setCanUndo(false);setCanRedo(false);setSelectedKey(null);setSelectedClip(null);setSelectedClips([]);setPlayhead(0)}
  useEffect(()=>{void refresh();const timer=setInterval(()=>{void fetch("/api/record").then(r=>r.json()).then((s:Status)=>{setStatus(s);if(s.state==="ready"&&!readySeen.current){readySeen.current=true;void refresh();if(s.id)void load(s.id)}if(s.state!=="ready")readySeen.current=false}).catch(()=>{})},1500);return()=>clearInterval(timer)},[]);
+ useEffect(()=>{
+  let active=true;
+  const check=async()=>{
+   try{
+    const response=await fetch("/api/render",{cache:"no-store"});
+    if(!response.ok)return;
+    const data=await response.json() as {state:string;lastResult?:{state:string;id:string;format:string;finishedAt:number;error?:string}};
+    if(!active)return;
+    if(data.state==="running"||data.state==="cancelling"){setExporting(true);return}
+    setExporting(false);
+    const result=data.lastResult;
+    if(!result||result.finishedAt<=handledExport.current)return;
+    handledExport.current=result.finishedAt;
+    if(result.state==="completed"){
+     setLastExport({id:result.id,format:result.format});
+     setMessage("Export MP4 terminé");
+     notify("Export MP4 terminé","success",{label:"Ouvrir la vidéo",href:"/api/media/"+encodeURIComponent(result.id)+"/"+result.format+".mp4"});
+    }else if(result.state==="cancelled"){setMessage("Export annulé");notify("Export annulé","info")}
+    else if(result.state==="error"){setMessage("Échec de l’export");notify(result.error||"Erreur de rendu","error")}
+   }catch{}
+  };
+  void check();const timer=setInterval(()=>void check(),1500);
+  return ()=>{active=false;clearInterval(timer)};
+ },[]);
  useEffect(()=>{const ref=player.current;if(!ref)return;const frame=(e:{detail:{frame:number}})=>setPlayhead(e.detail.frame/fps);const play=()=>setPlaying(true),pause=()=>setPlaying(false);ref.addEventListener("frameupdate",frame);ref.addEventListener("play",play);ref.addEventListener("pause",pause);return()=>{ref.removeEventListener("frameupdate",frame);ref.removeEventListener("play",play);ref.removeEventListener("pause",pause)}},[detail,format]);
  const camera=useMemo(()=>detail?(settings.camera.length?settings.camera:settings.advancedCamera.mode==="manual"?[]:settings.autoZoom?buildCameraTrack(detail.events,duration,detail.manifest.viewport,{zoom:settings.advancedCamera.amount,maxZoom:3}):[]):[],[detail,settings.camera,settings.autoZoom,settings.advancedCamera,duration]);
  const props=useMemo(()=>({src:detail?.video||"",title:detail?.scenario?.title||"Screen recording",intro:settings.intro,outro:settings.outro,zoom:1,events:detail?.events||[],camera,viewport:detail?.manifest.viewport||{width:1600,height:900},settings,preview:true}),[detail,camera,settings]);
@@ -99,16 +125,15 @@ export default function Home(){
  async function save(){if(!selected)return false;setBusy(true);try{const r=await fetch("/api/recordings/"+selected,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(settings)});if(!r.ok)throw Error(await r.text());setMessage("Réglages enregistrés");notify("Projet enregistré","success");return true}catch(e){setMessage(String(e));notify(String(e),"error");return false}finally{setBusy(false)}}
  async function exportVideo(){
   if(!selected||exporting)return;
-  setExporting(true);setBusy(true);setMessage("Rendu MP4 en cours…");notify("Export MP4 démarré","info");
+  setLastExport(null);setExporting(true);setBusy(true);setMessage("Rendu MP4 en cours…");notify("Export MP4 démarré","info");
   try{
    const saved=await fetch("/api/recordings/"+selected,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(settings)});
    if(!saved.ok)throw Error("Sauvegarde impossible");
    const response=await fetch("/api/render",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({recording:selected,format})});
    const data=await response.json();
    if(!response.ok){if(data.cancelled){setMessage("Export annulé");notify("Export annulé","info");return}throw Error(data.error||"Échec du rendu")}
-   setMessage("Export terminé : "+data.output);
-   const file=format+".mp4";
-   notify("Export MP4 terminé","success",{label:"Ouvrir la vidéo",href:"/api/media/"+encodeURIComponent(selected)+"/"+file});
+   setMessage("Export MP4 terminé");
+   setLastExport({id:selected,format});
   }catch(e){setMessage(String(e));notify("Erreur d’export : "+String(e),"error")}
   finally{setExporting(false);setBusy(false)}
  }
@@ -167,6 +192,6 @@ export default function Home(){
     {tab==="titles"&&<><label className="field">Introduction<input value={settings.intro} onChange={e=>patch({intro:e.target.value})}/></label><label className="field">Conclusion<input value={settings.outro} onChange={e=>patch({outro:e.target.value})}/></label></>}
    </div></aside></ResizablePanel></ResizablePanels>
   <StudioToasts notices={notices} dismiss={dismiss}/>{projectDialog&&<ProjectDialog kind={projectDialog.kind} name={projectDialog.id} initialName={projectDialog.initialName} busy={busy} onCancel={()=>setProjectDialog(null)} onConfirm={value=>{const d=projectDialog;setProjectDialog(null);if(d.kind==="delete")void deleteProject(d.id,true);else void duplicateProject(d.id,value)}}/>}
-  </div><footer className="statusbar"><span>{message}</span><span>Local · {selected||"Aucun projet"}</span></footer>
+  </div><footer className="statusbar"><span>{message}{lastExport&&<a style={{marginLeft:12,textDecoration:"underline"}} href={"/api/media/"+encodeURIComponent(lastExport.id)+"/"+lastExport.format+".mp4"} target="_blank" rel="noopener noreferrer">Ouvrir la vidéo exportée ↗</a>}</span><span>Local · {selected||"Aucun projet"}</span></footer>
  </div>;
 }
