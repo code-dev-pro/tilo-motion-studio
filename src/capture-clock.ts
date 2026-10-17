@@ -1,4 +1,5 @@
 import {spawn} from "node:child_process";
+import {rename,rm} from "node:fs/promises";
 import {execFile} from "node:child_process";
 import {promisify} from "node:util";
 const execFileAsync=promisify(execFile);
@@ -29,4 +30,17 @@ export async function videoDuration(path:string):Promise<number>{
 }
 export function alignEvents<T extends {t:number}>(events:T[],offset:number):T[]{
  return events.map(e=>({...e,t:Math.max(0,e.t+offset)})).sort((a,b)=>a.t-b.t);
+}
+
+/** Re-encode only once at finalization to remove preroll and marker accurately. */
+export async function trimCapturePreroll(path:string,seconds:number):Promise<void>{
+ if(seconds<=0||!Number.isFinite(seconds))throw Error("Invalid capture trim");
+ const temp=path+".synced.webm",backup=path+".preroll.webm";
+ try{
+  await execFileAsync("ffmpeg",["-y","-hide_banner","-loglevel","error","-i",path,"-ss",seconds.toFixed(6),"-an","-c:v","libvpx-vp9","-deadline","realtime","-cpu-used","5","-crf","22","-b:v","0",temp],{timeout:300000});
+  await videoDuration(temp);
+  await rename(path,backup);
+  try{await rename(temp,path)}catch(e){await rename(backup,path);throw e}
+  await rm(backup,{force:true});
+ }finally{await rm(temp,{force:true}).catch(()=>{})}
 }
