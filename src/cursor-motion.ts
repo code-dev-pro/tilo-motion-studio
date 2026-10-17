@@ -11,7 +11,8 @@ const ease=(u:number)=>{const t=Math.max(0,Math.min(1,u));return t*t*(3-2*t)};
 export function cursorPosition(events:MotionEvent[],time:number,options:CursorMotionOptions):CursorPoint|null{
  const points=events.filter(e=>["move","drag","click"].includes(e.type)&&Number.isFinite(e.t)&&Number.isFinite(e.x)&&Number.isFinite(e.y)).sort((a,b)=>a.t-b.t);
  if(!points.length)return null;
- const t=Math.max(0,time-options.lag);
+ const recentDrag=points.some(p=>p.type==="drag"&&Math.abs(p.t-time)<.09);
+ const t=Math.max(0,time-(recentDrag?0:options.lag));
  let hi=points.findIndex(p=>p.t>=t);
  if(hi<0)hi=points.length;
  const before=points[Math.max(0,hi-1)],after=points[Math.min(points.length-1,hi)];
