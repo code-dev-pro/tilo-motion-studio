@@ -7,6 +7,7 @@ import {recorderInitScript} from "./recorder-init-script";
 import type {MotionEvent} from "./cinematic";
 import {normalizeRecorderEvent,recordingEventSummary} from "./recorder-events";
 import {recorderEventTime} from "./recorder-event-time";
+import {detectMarkerEnd,videoDuration,alignEvents} from "./capture-clock";
 import {defineScenario} from "./core";
 import {recoverRecordedVideo,verifyRecordingVideo,writeJsonAtomic} from "./recording-recovery";
 const options=recordingOptions.parse(JSON.parse(process.env.TILO_RECORDING_OPTIONS||"{}"));
@@ -17,6 +18,7 @@ const context=await browser.newContext({viewport:{width:options.width,height:opt
 const page=await context.newPage();
 const events:MotionEvent[]=[];
 let start=0,stopping=false,bridgeCount=0;
+let markerRemovedEpoch:number|null=null;
 let finalization:Promise<void>|null=null;
 const sourceCounts:Record<string,number>={};const pageUrls:string[]=[];
 context.on("page",p=>{pageUrls.push(p.url());p.on("framenavigated",f=>{if(f===p.mainFrame())pageUrls.push(f.url())})});
