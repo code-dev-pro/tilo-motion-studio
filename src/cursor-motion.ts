@@ -25,6 +25,10 @@ export function cursorPosition(events:MotionEvent[],time:number,options:CursorMo
    const avgX=near.reduce((a,p,i)=>a+p.x*weights[i],0)/sum,avgY=near.reduce((a,p,i)=>a+p.y*weights[i],0)/sum;
    x=x*.65+avgX*.35;y=y*.65+avgY*.35}
  }
+ // A click is a hard positional anchor: cinematic lag must not place the cursor
+ // outside the clicked target when the video reaches the actual click frame.
+ const clickAnchor=events.filter(e=>e.type==="click"&&Number.isFinite(e.t)&&e.t<=time&&time-e.t<=Math.max(.14,options.lag+.04)).sort((a,b)=>b.t-a.t)[0];
+ if(clickAnchor){x=clickAnchor.x;y=clickAnchor.y}
  const click=events.some(e=>e.type==="click"&&Math.abs(e.t-time)<.14);
  const last=points.filter(p=>p.t<=time).at(-1)?.t??-Infinity;
  return {x,y,click,lastEventTime:last};
